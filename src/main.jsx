@@ -3,12 +3,12 @@ import { createRoot } from 'react-dom/client'
 import { createBrowserRouter, RouterProvider, useNavigate } from 'react-router-dom'
 import './index.css'
 
-import AdminLogin from './admin/AdminLogin'
-import AdminDashboard from './admin/AdminDashboard'
-import AdminMenu from './admin/AdminMenu'
-import AdminFeedback from './admin/AdminFeedback'
+import AdminLogin from './AdminLogin'
+import AdminDashboard from './AdminDashboard'
+import AdminMenu from './AdminMenu'
+import AdminFeedback from './AdminFeedback'
 import AdminRequireAuth from './components/AdminRequireAuth';
-import UserRequireAuth from './components/UserRequireAuth';
+
 
 const router = createBrowserRouter([{
     path: '/login',
