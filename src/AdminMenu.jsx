@@ -39,15 +39,16 @@ const AdminMenu = () => {
 
   // Availability
   const handleAvailabilityChange = async (id, size, status) => {
+
     console.log("Sending Availability Update:", { id, size, status }); // ✅ Debug request
 
     try {
         const response = await axios.post(
-            "https://yappari-coffee-bar.shop/api/updateAvailability",
+            "https://yappari-coffee-bar.shop/api/updateAvailability.php",
             {
                 food_id: id,
-                size: size.toLowerCase(), // ✅ Ensure lowercase match
-                availability: status
+                size: size.toLowerCase(),
+                availability: status // ✅ Ensure correct format
             },
             {
                 withCredentials: true,
@@ -62,10 +63,9 @@ const AdminMenu = () => {
             setMenuItems((prevItems) =>
                 prevItems.map((item) =>
                     item.food_id === id
-                        ? { ...item, [`availability_${size.toLowerCase()}`]: status }
+                        ? { ...item, [`availability_${size.toLowerCase()}`]: status } // ✅ Update state with correct format
                         : item
                 )
-            
             );
         } else {
             alert("Failed to update availability: " + response.data.message);
@@ -77,20 +77,27 @@ const AdminMenu = () => {
   };
 
 
+
   //get menu
   useEffect(() => {
-    axios.get("https://yappari-coffee-bar.shop/api/getMenuItems ")
-      .then((response) => {
-        if (response.data.success) { // ✅ Ensure `success` is checked
-          setMenuItems(response.data.data); // ✅ Access `data`
-        } else {
-          console.error("Error fetching menu items:", response.data.message);
+    const fetchMenuItems = async () => {
+      try {
+        const response = await axios.get("https://yappari-coffee-bar.shop/api/getMenuItems", {
+          params: { timestamp: new Date().getTime() }, // ✅ Prevents caching
+          withCredentials: true,
+        });
+  
+        console.log("Fetched Data:", response.data); // ✅ Debugging
+        if (response.data.success) {
+          setMenuItems(response.data.data);
         }
-      })
-      .catch((error) => {
+      } catch (error) {
         console.error("Error fetching menu items:", error);
-      });
-  }, []);
+      }
+    };
+  
+    fetchMenuItems();
+  }, []);  
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -111,7 +118,7 @@ const AdminMenu = () => {
 
   const handleLogout = async () => {
     try {
-        await fetch("https://yappari-coffee-bar.shop/api/admin_logout ", {
+        await fetch("https://yappari-coffee-bar.shop/api/admin_logout", {
             method: "POST",
             credentials: "include",
         });
@@ -446,14 +453,15 @@ const AdminMenu = () => {
                           <td className="px-4 py-2 font-black text-[#1C359A]">
                             <span
                               className={`font-bold ${
-                                item[`availability_${sizeItem.dbKey}`] === "Available"
+                                item[`availability_${sizeItem.size}`] === "Available"
                                   ? "text-blue-600"
                                   : "text-red-600"
                               }`}
                             >
-                              {item[`availability_${sizeItem.dbKey}`] || "Not Available"}
+                              {item[`availability_${sizeItem.size}`]} {/* ✅ Display actual availability */}
                             </span>
                           </td>
+
 
 
                           <td className="px-4 py-2">{item.description}</td>
