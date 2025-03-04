@@ -44,7 +44,7 @@ const AdminMenu = () => {
 
     try {
         const response = await axios.post(
-            "https://yappari-coffee-bar.shop/api/updateAvailability.php",
+            "https://yappari-coffee-bar.shop/api/updateAvailability",
             {
                 food_id: id,
                 size: size.toLowerCase(),
@@ -458,6 +458,7 @@ const AdminMenu = () => {
                                   : "text-red-600"
                               }`}
                             >
+                            
                               {item[`availability_${sizeItem.size}`]} {/* ✅ Display actual availability */}
                             </span>
                           </td>
