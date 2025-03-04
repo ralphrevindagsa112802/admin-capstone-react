@@ -34,7 +34,7 @@ const AdminDashboard = () => {
                 credentials: "include",
             });
     
-            navigate("/login");
+            navigate("/");
         } catch (error) {
             console.error("Logout failed:", error);
         }

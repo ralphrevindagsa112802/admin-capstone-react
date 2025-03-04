@@ -12,12 +12,12 @@ const AdminRequireAuth = ({ children }) => {
         .then((res) => res.json())
         .then((data) => {
           if (!data.success) {
-            navigate("/login"); // ✅ Move navigation inside useEffect
+            navigate("/"); // ✅ Move navigation inside useEffect
           } else {
             setIsAdmin(true);
           }
         })
-        .catch(() => navigate("/login"));
+        .catch(() => navigate("/"));
     }, [navigate]); // ✅ Add navigate as a dependency
   
     if (isAdmin === null) return <p>Loading...</p>; // ✅ Prevent flickering

@@ -12,7 +12,7 @@ import AdminRequireAuth from './components/AdminRequireAuth';
 
 
 const router = createBrowserRouter([{
-    path: '/login',
+    path: '/',
     element: <AdminLogin />,
     errorElement: <NotFound/>,
   }, { 

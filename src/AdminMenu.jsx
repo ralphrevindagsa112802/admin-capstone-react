@@ -116,7 +116,7 @@ const AdminMenu = () => {
             credentials: "include",
         });
 
-        navigate("/login");
+        navigate("/");
     } catch (error) {
         console.error("Logout failed:", error);
     }
@@ -339,7 +339,7 @@ const AdminMenu = () => {
           </nav>
 
           {/* Logout Button */}
-          <Link to={"/login"} onClick={handleLogout}>
+          <Link to={"/"} onClick={handleLogout}>
             <button
               className="mt-20 font-bold flex items-center justify-center bg-[#1C359A] text-white px-18 py-2 rounded-lg hover:bg-blue-800"
             >
