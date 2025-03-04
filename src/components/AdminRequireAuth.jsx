@@ -22,7 +22,7 @@ const AdminRequireAuth = ({ children }) => {
   
     if (isAdmin === null) return <p>Loading...</p>; // ✅ Prevent flickering
   
-    return isAuthenticated ? children : null; // ✅ Don't navigate in render
+    return isAdmin ? children : null; // ✅ Don't navigate in render
   };
   
   export default AdminRequireAuth;
