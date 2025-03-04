@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client'
 import { createBrowserRouter, RouterProvider, useNavigate } from 'react-router-dom'
 import './index.css'
 
+import NotFound from './pages/NotFound'
 import AdminLogin from './AdminLogin'
 import AdminDashboard from './AdminDashboard'
 import AdminMenu from './AdminMenu'
