@@ -240,33 +240,39 @@ const AdminMenu = () => {
   };
 
   const handleConfirmDelete = async () => {
-    if (confirmDelete) {
-      try {
-        const response = await fetch(
-          "https://yappari-coffee-bar.shop/api/delete_food ",
-          {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ food_id: confirmDelete }),
-          }
-        );
-
-        const result = await response.json();
-
-        if (result.success) {
-          // Remove the deleted item from UI
-          setFoodList((prevList) =>
-            prevList.filter((item) => item.food_id !== confirmDelete)
-          );
-        } else {
-          alert("Failed to delete item");
+    if (!confirmDelete) return;
+  
+    try {
+      const response = await fetch(
+        "https://yappari-coffee-bar.shop/api/delete_food", // Ensure correct URL
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify({ food_id: confirmDelete }),
         }
-      } catch (error) {
-        console.error("Error deleting item:", error);
+      );
+  
+      const result = await response.json();
+      console.log("Delete API Response:", result); // ✅ Debug API response
+  
+      if (result.success) {
+        alert("Item deleted successfully!");
+        setMenuItems((prevItems) =>
+          prevItems.filter((item) => item.food_id !== confirmDelete)
+        );
+      } else {
+        alert("Failed to delete item: " + result.message);
+        console.error("Delete API Error:", result);
       }
+    } catch (error) {
+      console.error("Error deleting item:", error);
+      alert("Error: Could not delete item. Check console for details.");
     }
-    setConfirmDelete(null); // Close modal
+  
+    setConfirmDelete(null);
   };
+  
 
 
 
