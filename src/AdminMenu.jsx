@@ -454,12 +454,15 @@ const AdminMenu = () => {
                             <span
                               className={`font-bold ${
                                 item[`availability_${sizeItem.size}`] === "Available"
-                                  ? "text-blue-600"
-                                  : "text-red-600"
+                                ? "text-green-600"
+                                : item[`availability_${sizeItem.dbKey}`] === "Not Available"
+                                ? "text-red-600"
+                                : "text-green-600" // Default styling for undefined cases
                               }`}
                             >
                             
-                              {item[`availability_${sizeItem.size}`]} {/* ✅ Display actual availability */}
+                            {item[`availability_${sizeItem.dbKey}`] || "Not Available"}
+                            {/* ✅ Display actual availability */}
                             </span>
                           </td>
 
