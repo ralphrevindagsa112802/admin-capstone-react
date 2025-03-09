@@ -68,8 +68,8 @@ const AdminFeedback = () => {
               <span>Order History</span>
             </Link>
           </nav>
- {/* Logout Button */}
- <Link to={"/"} onClick={handleLogout}  className='flex justify-center'>
+          {/* Logout Button */}
+          <Link to={"/"} onClick={handleLogout} className='flex justify-center'>
             <button
               className="mt-20 font-bold flex items-center justify-center bg-[#1C359A] text-white px-12 text-sm py-2 rounded-lg hover:bg-blue-800"
             >
@@ -90,25 +90,25 @@ const AdminFeedback = () => {
             <table className="w-full bg-white opacity-90 rounded-2xl">
               <thead>
                 <tr className="border-t border-4 border-[#DCDEEA]">
-                <th className="p-3 text-left text-[#808080]">#</th>
-                <th className="px-4 py-2 text-left text-sm text-[#808080]">Customer</th>
-                <th className="px-4 py-2 text-left text-sm text-[#808080]">Email</th>
-                <th className="px-4 py-2 text-left text-sm text-[#808080]">Feedback</th>
-                <th className="px-4 py-2 text-left text-sm text-[#808080]">Rating</th>
+                  <th className="p-3 text-left text-[#808080]">#</th>
+                  <th className="px-4 py-2 text-left text-sm text-[#808080]">Customer</th>
+                  <th className="px-4 py-2 text-left text-sm text-[#808080]">Email</th>
+                  <th className="px-4 py-2 text-left text-sm text-[#808080]">Feedback</th>
+                  <th className="px-4 py-2 text-left text-sm text-[#808080]">Rating</th>
                 </tr>
               </thead>
               <tbody>
-              {feedbackData.length > 0 ? (
-                feedbackData.map((feedback, index) => (
-                  <tr key={index} className="border-t border-4 border-[#DCDEEA] hover:bg-gray-100">
-                    <td className="p-3">{index + 1}</td>
-                    <td className="px-4 py-2">{feedback.f_name} {feedback.l_name}</td>
-                    <td className="px-4 py-2">{feedback.email}</td>
-                    <td className="px-4 py-2">{feedback.order_feedback}</td>
-                    <td className="px-4 py-2">{feedback.feedback_score}</td>
-                  </tr>
-                ))
-              ) : (
+                {feedbackData.length > 0 ? (
+                  feedbackData.map((feedback, index) => (
+                    <tr key={index} className="border-t border-4 border-[#DCDEEA] hover:bg-gray-100">
+                      <td className="p-3">{index + 1}</td>
+                      <td className="px-4 py-2">{feedback.f_name} {feedback.l_name}</td>
+                      <td className="px-4 py-2">{feedback.email}</td>
+                      <td className="px-4 py-2">{feedback.order_feedback}</td>
+                      <td className="px-4 py-2">{feedback.feedback_score}</td>
+                    </tr>
+                  ))
+                ) : (
                   <tr>
                     <td colSpan="3" className="px-4 py-2 text-center">No feedback available</td>
                   </tr>

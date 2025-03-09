@@ -66,6 +66,11 @@ const AdminDashboard = () => {
                     [orderId]: status,
                 }));
                 setOpenDropdown(null);
+
+                // ✅ Move to order history if status is 'Completed'
+                if (status === "Completed") {
+                    await saveOrderToHistory(orderId);
+                }
             } else {
                 alert("Error: " + data.message);
             }
@@ -74,6 +79,30 @@ const AdminDashboard = () => {
             alert("Something went wrong!");
         }
     };
+
+    const saveOrderToHistory = async (orderId) => {
+        try {
+            const response = await fetch("https://yappari-coffee-bar.shop/api/saveOrderHistory.php", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                credentials: "include",
+                body: JSON.stringify({ order_id: orderId }),
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                alert("Order successfully moved to history!");
+                // Remove the order from the active orders list
+                setOrders((prevOrders) => prevOrders.filter(order => order.orders_id !== orderId));
+            } else {
+                alert("Failed to save order to history: " + data.message);
+            }
+        } catch (error) {
+            console.error("Error saving order to history:", error);
+        }
+    };
+
 
 
 
