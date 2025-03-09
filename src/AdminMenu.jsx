@@ -193,7 +193,7 @@ const AdminMenu = () => {
         if (editingFoodId) {
             data.append("food_id", editingFoodId);
             response = await axios.post(
-                "https://yappari-coffee-bar.shop/api/updateProduct ",
+                "https://yappari-coffee-bar.shop/api/updateProduct",
                 data,
                 {
                     headers: { "Content-Type": "multipart/form-data" },
@@ -202,7 +202,7 @@ const AdminMenu = () => {
             );
         } else {
             response = await axios.post(
-                "https://yappari-coffee-bar.shop/api/add_product ",
+                "https://yappari-coffee-bar.shop/api/add_product",
                 data,
                 {
                     headers: { "Content-Type": "multipart/form-data" },
@@ -323,7 +323,7 @@ const AdminMenu = () => {
       {/* Sidebar & Main Content */}
       <div className="flex flex-row h-full">
         {/* Sidebar */}
-        <div className="w-64 flex-none bg-white shadow-md h-full flex flex-col p-4">
+        <div className="w-52 flex-none bg-white shadow-md h-full flex flex-col p-4">
           <nav className="flex flex-col space-y-4">
             <Link
               to="/dashboard"
@@ -344,7 +344,7 @@ const AdminMenu = () => {
               <span>Feedback</span>
             </Link>
             <Link
-              to="/order-history"
+              to="/history"
               className="font-bold border-l-2 border-black hover:border-[#1C359A] sidebar-link flex items-center justify-center space-x-2 p-3 hover:bg-gray-200 text-gray-800"
             >
               <span>Order History</span>
@@ -352,9 +352,9 @@ const AdminMenu = () => {
           </nav>
 
           {/* Logout Button */}
-          <Link to={"/"} onClick={handleLogout}>
+          <Link to={"/"} onClick={handleLogout}  className='flex justify-center'>
             <button
-              className="mt-20 font-bold flex items-center justify-center bg-[#1C359A] text-white px-18 py-2 rounded-lg hover:bg-blue-800"
+              className="mt-20 font-bold flex items-center justify-center bg-[#1C359A] text-white px-12 text-sm py-2 rounded-lg hover:bg-blue-800"
             >
               SIGN OUT
             </button>
@@ -366,7 +366,7 @@ const AdminMenu = () => {
           {/* Header Section */}
           <div className="w-full flex justify-between">
             <div className="text-[#1C359A] text-lg font-bold">
-              Order Management
+              Menu Management
             </div>
             <div className="flex gap-2">
             {/** <button className="px-4 py-2 border-2 border-[#1C359A] text-black font-bold rounded-md hover:bg-white">

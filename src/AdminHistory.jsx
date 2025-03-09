@@ -2,35 +2,14 @@ import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
 
-const AdminFeedback = () => {
-  const [feedbackData, setFeedbackData] = useState([]);
+const AdminHistory = () => {
   const navigate = useNavigate();
 
-  useEffect(() => {
-    const fetchFeedback = async () => {
-      try {
-        const response = await axios.get(
-          "https://yappari-coffee-bar.shop/api/get_feedback.php",
-          { withCredentials: true } // Ensures session cookies are sent
-        );
-
-        if (response.data.success) {
-          setFeedbackData(response.data.feedback);
-        } else {
-          console.error("Failed to fetch feedback:", response.data.message);
-        }
-      } catch (error) {
-        console.error("Error fetching feedback:", error);
-      }
-    };
-
-    fetchFeedback();
-  }, []);
 
   const handleLogout = async () => {
     try {
       await axios.post(
-        "https://yappari-coffee-bar.shop/api/admin_logout",
+        "https://admin.yappari-coffee-bar.shop/api/admin_logout.php",
         {},
         { withCredentials: true }
       );
@@ -68,8 +47,9 @@ const AdminFeedback = () => {
               <span>Order History</span>
             </Link>
           </nav>
- {/* Logout Button */}
- <Link to={"/"} onClick={handleLogout}  className='flex justify-center'>
+
+          {/* Logout Button */}
+          <Link to={"/"} onClick={handleLogout}  className='flex justify-center'>
             <button
               className="mt-20 font-bold flex items-center justify-center bg-[#1C359A] text-white px-12 text-sm py-2 rounded-lg hover:bg-blue-800"
             >
@@ -82,22 +62,27 @@ const AdminFeedback = () => {
         <div className="flex-1 w-full p-6 overflow-auto bg-[#DCDEEA]">
           {/* Header Section */}
           <div className="w-full flex justify-between">
-            <div className="text-[#1C359A] text-lg font-bold">Feedback</div>
+            <div className="text-[#1C359A] text-lg font-bold">Order History</div>
           </div>
+            {/**Table content here */}
+            <div className="p-2 w-full mt-6 rounded-2xl">
 
-          {/* Feedback Table */}
-          <div className="p-2 w-full mt-6 rounded-2xl">
             <table className="w-full bg-white opacity-90 rounded-2xl">
               <thead>
                 <tr className="border-t border-4 border-[#DCDEEA]">
                 <th className="p-3 text-left text-[#808080]">#</th>
-                <th className="px-4 py-2 text-left text-sm text-[#808080]">Customer</th>
-                <th className="px-4 py-2 text-left text-sm text-[#808080]">Email</th>
-                <th className="px-4 py-2 text-left text-sm text-[#808080]">Feedback</th>
-                <th className="px-4 py-2 text-left text-sm text-[#808080]">Rating</th>
+                <th className="px-4 py-2 text-left text-sm text-[#808080]">Order #</th>
+                <th className="px-4 py-2 text-left text-sm text-[#808080]">Date</th>
+                <th className="px-4 py-2 text-left text-sm text-[#808080]">Name</th>
+                <th className="px-4 py-2 text-left text-sm text-[#808080]">Order details</th>
+                <th className="px-4 py-2 text-left text-sm text-[#808080]">Total</th>
+                <th className="px-4 py-2 text-left text-sm text-[#808080]">Location</th>
+                <th className="px-4 py-2 text-left text-sm text-[#808080]">Status</th>
+
                 </tr>
               </thead>
               <tbody>
+                {/**
               {feedbackData.length > 0 ? (
                 feedbackData.map((feedback, index) => (
                   <tr key={index} className="border-t border-4 border-[#DCDEEA] hover:bg-gray-100">
@@ -113,13 +98,16 @@ const AdminFeedback = () => {
                     <td colSpan="3" className="px-4 py-2 text-center">No feedback available</td>
                   </tr>
                 )}
+                   */}
               </tbody>
             </table>
-          </div>
+            </div>
+
+
         </div>
       </div>
     </div>
   );
 };
 
-export default AdminFeedback;
+export default AdminHistory;

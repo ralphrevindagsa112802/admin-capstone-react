@@ -8,6 +8,7 @@ import AdminLogin from './AdminLogin'
 import AdminDashboard from './AdminDashboard'
 import AdminMenu from './AdminMenu'
 import AdminFeedback from './AdminFeedback'
+import AdminHistory from './AdminHistory'
 import AdminRequireAuth from './components/AdminRequireAuth';
 
 
@@ -26,6 +27,10 @@ const router = createBrowserRouter([{
   }, {
     path: '/feedback',
     element: <AdminRequireAuth><AdminFeedback/></AdminRequireAuth>,
+    errorElement: <NotFound/>
+  }, {
+    path: '/history',
+    element: <AdminRequireAuth><AdminHistory/></AdminRequireAuth>,
     errorElement: <NotFound/>
   }]);
   
