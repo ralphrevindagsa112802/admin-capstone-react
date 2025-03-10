@@ -21,6 +21,9 @@ const AdminMenu = () => {
   const [previewImage, setPreviewImage] = useState(null);
   const [dropdownOpen, setDropdownOpen] = useState(null);
   const [editingFoodId, setEditingFoodId] = useState(null);
+  const [isFilterDropdownOpen, setIsFilterDropdownOpen] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState("All");
+  const [filteredItems, setFilteredItems] = useState([]);
 
   const [formData, setFormData] = useState({
     food_name: "",
@@ -31,11 +34,36 @@ const AdminMenu = () => {
     food_img: null,
   });
 
+  const categories = [
+    "All",
+    "Rice Meal",
+    "Classic Coffee",
+    "Frappes",
+    "Smoothies",
+    "Refreshers",
+    "Milk Drinks",
+    "Dessert",
+    "Snacks and Pasta"
+  ];
 
   const toggleDropdown = (id, size) => {
     setDropdownOpen(prevId => (prevId === `${id}-${size}` ? null : `${id}-${size}`));
   };    
     
+  const toggleFilterDropdown = () => {
+    setIsFilterDropdownOpen(!isFilterDropdownOpen);
+  };
+
+  const handleCategorySelect = (category) => {
+    setSelectedCategory(category);
+    setIsFilterDropdownOpen(false);
+    
+    if (category === "All") {
+      setFilteredItems(menuItems);
+    } else {
+      setFilteredItems(menuItems.filter(item => item.category === category));
+    }
+  };
 
   // Availability
   const handleAvailabilityChange = async (id, size, status) => {
@@ -67,6 +95,15 @@ const AdminMenu = () => {
                         : item
                 )
             );
+            
+            // Update filtered items as well
+            setFilteredItems((prevItems) =>
+                prevItems.map((item) =>
+                    item.food_id === id
+                        ? { ...item, [`availability_${size.toLowerCase()}`]: status }
+                        : item
+                )
+            );
         } else {
             alert("Failed to update availability: " + response.data.message);
         }
@@ -90,6 +127,7 @@ const AdminMenu = () => {
         console.log("Fetched Data:", response.data); // ✅ Debugging
         if (response.data.success) {
           setMenuItems(response.data.data);
+          setFilteredItems(response.data.data); // Initialize filtered items with all items
         }
       } catch (error) {
         console.error("Error fetching menu items:", error);
@@ -103,6 +141,10 @@ const AdminMenu = () => {
     const handleClickOutside = (event) => {
       if (!event.target.closest(".dropdown-menu") && !event.target.closest(".action-button")) {
         setDropdownOpen(null);
+      }
+      
+      if (!event.target.closest(".filter-dropdown") && !event.target.closest(".filter-button")) {
+        setIsFilterDropdownOpen(false);
       }
     };
   
@@ -227,9 +269,6 @@ const AdminMenu = () => {
   };
 
   
-    
-
-  
 
   //deleting from admin and database
   const [confirmDelete, setConfirmDelete] = useState(null); // Store item ID to delete
@@ -258,9 +297,9 @@ const AdminMenu = () => {
   
       if (result.success) {
         alert("Item deleted successfully!");
-        setMenuItems((prevItems) =>
-          prevItems.filter((item) => item.food_id !== confirmDelete)
-        );
+        const updatedMenuItems = menuItems.filter((item) => item.food_id !== confirmDelete);
+        setMenuItems(updatedMenuItems);
+        setFilteredItems(updatedMenuItems);
       } else {
         alert("Failed to delete item: " + result.message);
         console.error("Delete API Error:", result);
@@ -349,6 +388,9 @@ const AdminMenu = () => {
             >
               <span>Order History</span>
             </Link>
+            <Link to="/analytics" className="font-bold border-l-2 border-black hover:border-[#1C359A] sidebar-link flex items-center justify-center space-x-2 p-3 hover:bg-gray-200 text-gray-800">
+              <span>Admin Analytics</span>
+            </Link>
           </nav>
 
           {/* Logout Button */}
@@ -366,13 +408,9 @@ const AdminMenu = () => {
           {/* Header Section */}
           <div className="w-full flex justify-between">
             <div className="text-[#1C359A] text-lg font-bold">
-              Menu Management
+              Menu Management {selectedCategory !== "All" && `- ${selectedCategory}`}
             </div>
             <div className="flex gap-2">
-            {/** <button className="px-4 py-2 border-2 border-[#1C359A] text-black font-bold rounded-md hover:bg-white">
-                Post
-              </button>
-            */}  
               <button
                 onClick={handleOpenModal}
                 className="px-4 py-2 border-2 border-[#1C359A] text-black font-bold rounded-md hover:bg-white"
@@ -380,23 +418,49 @@ const AdminMenu = () => {
                 Add Product
               </button>
 
-              <button className="px-4 py-2 border-2 border-[#1C359A] text-black font-bold rounded-md flex items-center space-x-2 hover:bg-white">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  strokeWidth="1.5"
-                  stroke="currentColor"
-                  className="w-5 h-5"
+              <div className="relative">
+                <button 
+                  onClick={toggleFilterDropdown}
+                  className="px-4 py-2 border-2 border-[#1C359A] text-black font-bold rounded-md flex items-center space-x-2 hover:bg-white filter-button"
                 >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="M10.5 6h3m-4.5 6h6m-7.5 6h9"
-                  />
-                </svg>
-                <span>Filter</span>
-              </button>
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    strokeWidth="1.5"
+                    stroke="currentColor"
+                    className="w-5 h-5"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M10.5 6h3m-4.5 6h6m-7.5 6h9"
+                    />
+                  </svg>
+                  <span>Filter</span>
+                </button>
+                
+                {/* Filter Dropdown */}
+                {isFilterDropdownOpen && (
+                  <div className="absolute right-0 mt-1 w-48 bg-white rounded-md shadow-lg z-50 filter-dropdown">
+                    <div className="py-1">
+                      {categories.map((category) => (
+                        <button
+                          key={category}
+                          onClick={() => handleCategorySelect(category)}
+                          className={`block w-full text-left px-4 py-2 text-sm ${
+                            selectedCategory === category 
+                              ? 'bg-blue-100 text-[#1C359A] font-bold' 
+                              : 'text-gray-700 hover:bg-gray-100'
+                          }`}
+                        >
+                          {category}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
 
@@ -405,7 +469,6 @@ const AdminMenu = () => {
             <table className="w-full bg-white opacity-90 rounded-2xl">
               <thead>
                 <tr className="border-t border-4 border-[#DCDEEA]">
-                  {/**  <th className="px-4 py-2 text-left text-sm text-[#808080]">ID</th> */}
                   <th className="p-3 text-left text-[#808080]">
                     <input type="checkbox" />
                   </th>
@@ -433,8 +496,8 @@ const AdminMenu = () => {
                 </tr>
               </thead>
                 <tbody>
-                  {menuItems && menuItems.length > 0 ? (
-                    menuItems.flatMap((item) => {                      
+                  {filteredItems && filteredItems.length > 0 ? (
+                    filteredItems.flatMap((item) => {                      
                       // Get category-specific labels or fallback to default
                       const labels = sizeLabels[item.category] || { small: "Small", medium: "Medium", large: "Large" };
                       
@@ -459,7 +522,7 @@ const AdminMenu = () => {
                           <td className="px-4 py-2 font-black text-[#1C359A]">
                             <span
                               className={`font-bold ${
-                                item[`availability_${sizeItem.size}`] === "Available"
+                                item[`availability_${sizeItem.dbKey}`] === "Available"
                                 ? "text-green-600"
                                 : item[`availability_${sizeItem.dbKey}`] === "Not Available"
                                 ? "text-red-600"
@@ -468,11 +531,8 @@ const AdminMenu = () => {
                             >
                             
                             {item[`availability_${sizeItem.dbKey}`] || "Not Available"}
-                            {/* ✅ Display actual availability */}
                             </span>
                           </td>
-
-
 
                           <td className="px-4 py-2">{item.description}</td>
                           <td className="px-4 py-2 relative">
@@ -489,10 +549,10 @@ const AdminMenu = () => {
                                   className="block w-full text-left px-4 py-2 text-black hover:bg-gray-200">
                                   Edit
                                 </button>
-                                <button onClick={() => handleAvailabilityChange(item.food_id, sizeItem.size, "Available")} className="block w-full text-left px-4 py-2 text-green-600 hover:bg-gray-200">
+                                <button onClick={() => handleAvailabilityChange(item.food_id, sizeItem.dbKey, "Available")} className="block w-full text-left px-4 py-2 text-green-600 hover:bg-gray-200">
                                   Available
                                 </button>
-                                <button onClick={() => handleAvailabilityChange(item.food_id, sizeItem.size, "Not Available")} className="block w-full text-left px-4 py-2 text-red-600 hover:bg-gray-200">
+                                <button onClick={() => handleAvailabilityChange(item.food_id, sizeItem.dbKey, "Not Available")} className="block w-full text-left px-4 py-2 text-red-600 hover:bg-gray-200">
                                   Not Available
                                 </button>
                                 <button onClick={() => handleDeleteClick(item.food_id)} className="block w-full text-left px-4 py-2 text-black hover:bg-gray-200">
@@ -507,7 +567,9 @@ const AdminMenu = () => {
                   ) : (
                     <tr>
                       <td colSpan="8" className="border px-4 py-2 text-center text-gray-500">
-                        No menu items available
+                        {selectedCategory !== "All" 
+                          ? `No menu items found in the ${selectedCategory} category` 
+                          : "No menu items available"}
                       </td>
                     </tr>
                   )}
