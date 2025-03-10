@@ -8,6 +8,11 @@ const AdminAnalytics = () => {
   const [analyticsData, setAnalyticsData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [userCount, setUserCount] = useState(0);
+  const [totalOrders, setTotalOrders] = useState(0);
+  const [totalSales, setTotalSales] = useState(0);
+
+  
 
   // Fetch analytics data based on selected time range
   useEffect(() => {
@@ -31,6 +36,62 @@ const AdminAnalytics = () => {
     fetchAnalyticsData();
   }, [timeRange]);
 
+
+    // Fetch total sales from API
+    useEffect(() => {
+      const fetchTotalSales = async () => {
+        try {
+          const response = await axios.get(
+            "https://yappari-coffee-bar.shop/api/total_sales",
+            { withCredentials: true }
+          );
+          console.log("Total Sales API Response:", response.data); // Debugging
+          setTotalSales(response.data.total_sales);
+        } catch (error) {
+          console.error("Failed to fetch total sales:", error);
+        }
+      };
+  
+      fetchTotalSales();
+    }, []);
+
+
+  // Fetch user count from database
+  useEffect(() => {
+    const fetchUserCount = async () => {
+      try {
+        const response = await axios.get(
+          "https://yappari-coffee-bar.shop/api/count",
+          { withCredentials: true }
+        );
+        setUserCount(response.data.count);
+      } catch (error) {
+        console.error("Failed to fetch user count:", error);
+      }
+    };
+
+    fetchUserCount();
+  }, []);
+
+   // Fetch total orders from database
+   useEffect(() => {
+    const fetchTotalOrders = async () => {
+      try {
+        const response = await axios.get(
+          "https://yappari-coffee-bar.shop/api/orders_count",
+          { withCredentials: true }
+        );
+        console.log("Total Orders API Response:", response.data); // Debugging
+        setTotalOrders(response.data.count);
+      } catch (error) {
+        console.error("Failed to fetch total orders:", error);
+      }
+    };
+
+    fetchTotalOrders();
+  }, []);
+
+  // handle logout
   const handleLogout = async () => {
     try {
       await axios.post(
@@ -46,9 +107,7 @@ const AdminAnalytics = () => {
 
   const renderDashboardCards = () => {
     // Hard-coded default values to ensure cards always display
-    let totalSales = 0;
-    let totalOrders = 0;
-    let totalUsers = 0;
+    let totalUsers = userCount; // Use the fetched user count
 
     // Try to calculate from analyticsData if available
     if (!loading && !error && analyticsData) {
@@ -61,7 +120,10 @@ const AdminAnalytics = () => {
       else if (typeof analyticsData === 'object') {
         totalSales = analyticsData.totalSales || 0;
         totalOrders = analyticsData.totalOrders || 0;
-        totalUsers = analyticsData.totalUsers || 0;
+        // Only override if analytics data has user count
+        if (analyticsData.totalUsers) {
+          totalUsers = analyticsData.totalUsers;
+        }
       }
     }
 
@@ -78,16 +140,16 @@ const AdminAnalytics = () => {
           <h3 className="text-[#2F3A8F] text-xl font-bold mb-4">Total Sales</h3>
           <div className="flex flex-col">
             <p className="text-2xl font-bold text-gray-800">₱{totalSales.toLocaleString()}</p>
-            <p className="text-sm text-gray-500 mt-10">{getTimeRangeText()}</p>
+            <p className="text-sm text-gray-500 mt-10">Total revenue</p>
           </div>
         </div>
         
         {/* Users Card */}
         <div className="bg-white p-6 rounded-lg shadow-sm">
-          <h3 className="text-[#2F3A8F] text-xl font-bold mb-4">Users</h3>
+          <h3 className="text-[#2F3A8F] text-xl font-bold mb-4">Registered Users</h3>
           <div className="flex flex-col">
             <p className="text-2xl font-bold text-gray-800">{totalUsers}</p>
-            <p className="text-sm text-gray-500 mt-10">{getTimeRangeText()}</p>
+            <p className="text-sm text-gray-500 mt-10">Total registered accounts</p>
           </div>
         </div>
         
@@ -242,6 +304,7 @@ const AdminAnalytics = () => {
             <Link to="/analytics" className="font-bold border-l-2 border-[#1C359A] hover:border-[#1C359A] sidebar-link flex items-center justify-center space-x-2 p-3 bg-gray-200 text-[#1C359A]">
               <span>Admin Analytics</span>
             </Link>
+         
           </nav>
           {/* Logout Button */}
           <Link to={"/"} onClick={handleLogout} className='flex justify-center'>
