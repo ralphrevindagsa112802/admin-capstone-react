@@ -67,6 +67,9 @@ const AdminFeedback = () => {
             <Link to="/history" className="font-bold border-l-2 border-black hover:border-[#1C359A] sidebar-link flex items-center justify-center space-x-2 p-3 hover:bg-gray-200 text-gray-800">
               <span>Order History</span>
             </Link>
+            <Link to="/analytics" className="font-bold border-l-2 border-black hover:border-[#1C359A] sidebar-link flex items-center justify-center space-x-2 p-3 hover:bg-gray-200 text-gray-800">
+              <span>Admin Analytics</span>
+            </Link>
           </nav>
           {/* Logout Button */}
           <Link to={"/"} onClick={handleLogout} className='flex justify-center'>
