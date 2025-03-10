@@ -3,8 +3,6 @@ import { useNavigate, Link } from 'react-router-dom';
 import { FaEye } from 'react-icons/fa';
 import { FaEllipsisV } from "react-icons/fa";
 
-
-
 const AdminDashboard = () => {
     const navigate = useNavigate();
     const [orders, setOrders] = useState([]);
@@ -12,6 +10,7 @@ const AdminDashboard = () => {
     const [selectedOrders, setSelectedOrders] = useState([]);
     const [selectedOrder, setSelectedOrder] = useState(null);
     const [orderStatuses, setOrderStatuses] = useState({});
+    const [isProcessing, setIsProcessing] = useState(false);
 
     // ✅ Fetch order status when component mounts
     useEffect(() => {
@@ -80,58 +79,152 @@ const AdminDashboard = () => {
         }
     };
 
+    // Direct method to save to history without changing status
     const saveOrderToHistory = async (orderId) => {
         try {
+            // First, get the current order details to save in history
+            const orderToSave = orders.find(order => order.orders_id === orderId);
+            
+            if (!orderToSave) {
+                console.error(`Order with ID ${orderId} not found in current orders list`);
+                return { success: false, message: "Order not found in current list" };
+            }
+            
+            // Send data matching what the backend expects
             const response = await fetch("https://yappari-coffee-bar.shop/api/saveOrderHistory.php", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 credentials: "include",
-                body: JSON.stringify({ order_id: orderId }),
+                body: JSON.stringify({ 
+                    order_ids: [orderId] // Send as an array of order IDs
+                }),
             });
-
+    
             const data = await response.json();
-
+    
             if (data.success) {
-                alert("Order successfully moved to history!");
                 // Remove the order from the active orders list
                 setOrders((prevOrders) => prevOrders.filter(order => order.orders_id !== orderId));
+                return { success: true };
             } else {
-                alert("Failed to save order to history: " + data.message);
+                console.error("Failed to save order to history:", data.message);
+                return { success: false, message: data.message };
             }
         } catch (error) {
             console.error("Error saving order to history:", error);
+            return { success: false, message: error.message };
+        }
+    };
+
+    // ✅ Handle Complete button click
+    const handleCompleteOrders = async () => {
+        if (selectedOrders.length === 0) {
+            alert("Please select at least one order to complete");
+            return;
+        }
+
+        // Confirm before proceeding
+        const confirmComplete = window.confirm(`Are you sure you want to mark ${selectedOrders.length} order(s) as complete and move to history?`);
+        if (!confirmComplete) return;
+
+        setIsProcessing(true);
+        
+        try {
+            // Loop through each selected order
+            const results = await Promise.all(
+                selectedOrders.map(async (orderId) => {
+                    try {
+                        // First update the status to "Completed"
+                        const statusResult = await fetch("https://yappari-coffee-bar.shop/api/updateOrderStatus.php", {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            credentials: "include",
+                            body: JSON.stringify({ order_id: orderId, status: "Completed" }),
+                        }).then(r => r.json());
+                        
+                        // Even if status update fails, try to save to history directly
+                        if (!statusResult.success) {
+                            console.warn(`Could not update status for order ${orderId}: ${statusResult.message}`);
+                        }
+                        
+                        // Save to order_history table with direct method
+                        const historyResult = await saveOrderToHistory(orderId);
+                        
+                        return { 
+                            orderId, 
+                            success: historyResult.success, 
+                            message: historyResult.message 
+                        };
+                    } catch (error) {
+                        console.error(`Error processing order ${orderId}:`, error);
+                        return { orderId, success: false, message: error.message };
+                    }
+                })
+            );
+            
+            // Count successes and failures
+            const successful = results.filter(result => result.success).length;
+            const failed = results.length - successful;
+            
+            if (failed === 0) {
+                alert(`${successful} order(s) marked as completed and moved to history successfully!`);
+                
+                // Clear selection
+                setSelectedOrders([]);
+                
+                // Refresh orders list to show current state
+                fetchOrders();
+            } else {
+                alert(`${successful} order(s) completed successfully. ${failed} order(s) failed. Check console for details.`);
+                console.error("Failed orders:", results.filter(result => !result.success));
+                
+                // Still clear successful orders from selection
+                const successfulOrderIds = results
+                    .filter(result => result.success)
+                    .map(result => result.orderId);
+                
+                setSelectedOrders(prevSelected => 
+                    prevSelected.filter(id => !successfulOrderIds.includes(id))
+                );
+                
+                // Refresh orders list
+                fetchOrders();
+            }
+        } catch (error) {
+            console.error("Error completing orders:", error);
+            alert("An error occurred while processing your request.");
+        } finally {
+            setIsProcessing(false);
         }
     };
 
 
+    //fetch order
+    const fetchOrders = async () => {
+        try {
+            const response = await fetch("https://yappari-coffee-bar.shop/api/fetchOrderAdmin.php", {
+                method: "GET",
+                credentials: "include",
+            });
 
+            if (!response.ok) {
+                throw new Error(`HTTP error! Status: ${response.status}`);
+            }
 
+            const data = await response.json();
+            console.log("Fetched Orders:", data);
+
+            if (data.success) {
+                setOrders(data.orders);
+            } else {
+                console.error("Failed to fetch orders:", data.message);
+            }
+        } catch (error) {
+            console.error("Error fetching orders:", error);
+        }
+    };
 
     useEffect(() => {
-        const fetchOrders = async () => {
-            try {
-                const response = await fetch("https://yappari-coffee-bar.shop/api/fetchOrderAdmin.php", {
-                    method: "GET",
-                    credentials: "include",
-                });
-
-                if (!response.ok) {
-                    throw new Error(`HTTP error! Status: ${response.status}`);
-                }
-
-                const data = await response.json();
-                console.log("Fetched Orders:", data);
-
-                if (data.success) {
-                    setOrders(data.orders);
-                } else {
-                    console.error("Failed to fetch orders:", data.message);
-                }
-            } catch (error) {
-                console.error("Error fetching orders:", error);
-            }
-        };
-
         fetchOrders();
     }, []);
 
@@ -232,14 +325,15 @@ const AdminDashboard = () => {
                             Order Management
                         </div>
                         <div className="flex gap-2">
-                            {/** <button className="px-4 py-2 border-2 border-[#1C359A] text-black font-bold rounded-md hover:bg-white">
-                Post
-              </button>
-            */}
                             <button
-                                className="px-4 py-2 border-2 border-[#1C359A] text-black font-bold rounded-md hover:bg-white"
+                                onClick={handleCompleteOrders}
+                                disabled={isProcessing || selectedOrders.length === 0}
+                                className={`px-4 py-2 border-2 border-[#1C359A] font-bold rounded-md 
+                                ${(isProcessing || selectedOrders.length === 0) 
+                                  ? 'bg-gray-300 border-gray-400 text-gray-600 cursor-not-allowed' 
+                                  : 'text-black hover:bg-white'}`}
                             >
-                                Complete
+                                {isProcessing ? "Processing..." : `Complete (${selectedOrders.length})`}
                             </button>
 
                             <button className="px-4 py-2 border-2 border-[#1C359A] text-black font-bold rounded-md flex items-center space-x-2 hover:bg-white">
@@ -267,18 +361,22 @@ const AdminDashboard = () => {
                             <thead>
                                 <tr className="border-t border-4 border-[#DCDEEA]">
                                     <th className="p-3 text-left text-[#808080]">
-                                        <input type="checkbox" checked={selectedOrders.length === orders.length && orders.length > 0} onChange={handleSelectAll} />
+                                        <input 
+                                            type="checkbox" 
+                                            checked={selectedOrders.length === orders.length && orders.length > 0} 
+                                            onChange={handleSelectAll} 
+                                        />
                                     </th>
                                     <th className="p-3 text-left text-sm text-[#808080]">Order #</th>
                                     <th className="p-3 text-left text-sm text-[#808080]">Date</th>
                                     <th className="p-3 text-left text-sm text-[#808080]">Customer</th>
                                     <th className="p-3 text-left text-sm text-[#808080]">Location</th>
+                                    <th className="p-3 text-left text-sm text-[#808080]">Phone</th>
                                     <th className="p-3 text-left text-sm text-[#808080]">Service Option</th>
                                     <th className="p-3 text-left text-sm text-[#808080]">Details</th>
                                     <th className="p-3 text-left text-sm text-[#808080]">Total</th>
                                     <th className="p-3 text-left text-sm text-[#808080]">Status</th>
                                     <th className="p-3 text-left text-sm text-[#808080]">Update</th>
-
                                 </tr>
                             </thead>
                             <tbody>
@@ -286,12 +384,17 @@ const AdminDashboard = () => {
                                     orders.map((order) => (
                                         <tr key={order.orders_id} className="border-t border-4 border-[#DCDEEA] hover:bg-gray-100">
                                             <td className="p-3">
-                                                <input type="checkbox" checked={selectedOrders.includes(order.orders_id)} onChange={() => setSelectedOrders(prev => prev.includes(order.orders_id) ? prev.filter(id => id !== order.orders_id) : [...prev, order.orders_id])} />
+                                                <input 
+                                                    type="checkbox" 
+                                                    checked={selectedOrders.includes(order.orders_id)} 
+                                                    onChange={() => handleCheckboxChange(order.orders_id)} 
+                                                />
                                             </td>
                                             <td className="p-3 text-sm">{order.orders_id}</td>
                                             <td className="p-3 text-sm">{order.created_at}</td>
                                             <td className="p-3 text-sm">{order.user.full_name}</td>
-                                            <td className="p-3 text-sm">{order.user.address}</td> {/* Customer Address */}
+                                            <td className="p-3 text-sm">{order.user.address}</td>
+                                            <td className="p-3 text-sm">{order.user.phone}</td>
                                             <td className="p-3 text-sm">{order.shipping_method}</td>
                                             <td className="p-3 text-sm">
                                                 <button onClick={() => handleViewDetails(order)} className="text-blue-500 hover:text-blue-700">
@@ -301,7 +404,8 @@ const AdminDashboard = () => {
                                             <td className="p-3 text-sm">₱{order.total_amount}</td>
                                             <td className="p-3 font-semibold">
                                                 {orderStatuses[order.orders_id] || "Loading..."}
-                                            </td>                        <td className="p-3 relative">
+                                            </td>                        
+                                            <td className="p-3 relative">
                                                 <button onClick={() => handleDropdownToggle(order.orders_id)} className="text-gray-600 hover:text-black">
                                                     <FaEllipsisV />
                                                 </button>
@@ -323,21 +427,18 @@ const AdminDashboard = () => {
                                                     </div>
                                                 )}
                                             </td>
-
                                         </tr>
                                     ))
                                 ) : (
                                     <tr>
-                                        <td colSpan="6" className="text-center p-3">No orders found</td>
+                                        <td colSpan="10" className="text-center p-3">No orders found</td>
                                     </tr>
                                 )}
                             </tbody>
                         </table>
-
                     </div>
                 </main>
             </div>
-
 
             {/** Popup Details */}
             {selectedOrder && (
@@ -355,7 +456,7 @@ const AdminDashboard = () => {
                                 <span className="font-bold text-blue-700">Total cost:</span> ₱{selectedOrder.total_amount}
                             </p>
                             <p className="text-sm">
-                                <span className="font-bold text-blue-700">Service option:</span> Pick-up
+                                <span className="font-bold text-blue-700">Service option:</span> {selectedOrder.shipping_method}
                             </p>
                         </div>
 
@@ -390,7 +491,6 @@ const AdminDashboard = () => {
                     </div>
                 </div>
             )}
-
         </div>
     );
 };

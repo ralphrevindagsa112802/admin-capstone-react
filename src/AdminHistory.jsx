@@ -1,12 +1,14 @@
 import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
+import { FaEye } from "react-icons/fa"; // Make sure to import this icon
 
 const AdminHistory = () => {
   const navigate = useNavigate();
   const [orderHistory, setOrderHistory] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [selectedOrder, setSelectedOrder] = useState(null); // For popup details
 
   // Fetch order history when component mounts
   useEffect(() => {
@@ -45,6 +47,39 @@ const AdminHistory = () => {
     } catch (error) {
       console.error("Logout failed:", error);
     }
+  };
+
+  // Function to handle showing order details
+  const handleViewDetails = (order) => {
+    // Parse order_details if it's a JSON string
+    let parsedDetails = [];
+    try {
+      if (typeof order.order_details === 'string') {
+        parsedDetails = JSON.parse(order.order_details);
+      } else if (Array.isArray(order.order_details)) {
+        parsedDetails = order.order_details;
+      } else {
+        console.error("Order details is neither a string nor an array:", order.order_details);
+        parsedDetails = [];
+      }
+      
+      // Check if parsedDetails is valid and has items
+      if (!Array.isArray(parsedDetails) || parsedDetails.length === 0) {
+        console.warn("No items found in order details or invalid format");
+        parsedDetails = [{ food_name: "No items found", size: "-", quantity: 0, price: 0 }];
+      }
+      
+      console.log("Parsed order details:", parsedDetails); // Debug log
+    } catch (error) {
+      console.error("Error parsing order details:", error, order.order_details);
+      parsedDetails = [{ food_name: "Error parsing order details", size: "-", quantity: 0, price: 0 }];
+    }
+    
+    // Set selected order with parsed details
+    setSelectedOrder({
+      ...order,
+      items: parsedDetails
+    });
   };
 
   return (
@@ -91,25 +126,7 @@ const AdminHistory = () => {
           {/* Header Section */}
           <div className="w-full flex justify-between mb-4">
             <div className="text-[#1C359A] text-lg font-bold">Order History</div>
-            <div className="flex gap-2">
-              <button className="px-4 py-2 border-2 border-[#1C359A] text-black font-bold rounded-md flex items-center space-x-2 hover:bg-white">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  strokeWidth="1.5"
-                  stroke="currentColor"
-                  className="w-5 h-5"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="M10.5 6h3m-4.5 6h6m-7.5 6h9"
-                  />
-                </svg>
-                <span>Filter</span>
-              </button>
-            </div>
+            
           </div>
 
           {/* Loading State */}
@@ -137,9 +154,10 @@ const AdminHistory = () => {
                     <th className="px-4 py-2 text-left text-sm text-[#808080]">Order #</th>
                     <th className="px-4 py-2 text-left text-sm text-[#808080]">Date</th>
                     <th className="px-4 py-2 text-left text-sm text-[#808080]">Name</th>
-                    <th className="px-4 py-2 text-left text-sm text-[#808080]">Order details</th>
+                    <th className="px-4 py-2 text-left text-sm text-[#808080]">Details</th>
                     <th className="px-4 py-2 text-left text-sm text-[#808080]">Total</th>
                     <th className="px-4 py-2 text-left text-sm text-[#808080]">Location</th>
+                    <th className="px-4 py-2 text-left text-sm text-[#808080]">Phone</th>
                     <th className="px-4 py-2 text-left text-sm text-[#808080]">Status</th>
                   </tr>
                 </thead>
@@ -151,9 +169,14 @@ const AdminHistory = () => {
                         <td className="px-4 py-2 text-sm">{order.order_id}</td>
                         <td className="px-4 py-2 text-sm">{order.date}</td>
                         <td className="px-4 py-2 text-sm">{order.customer_name}</td>
-                        <td className="px-4 py-2 text-sm">{order.order_details}</td>
+                        <td className="px-4 py-2 text-sm">
+                          <button onClick={() => handleViewDetails(order)} className="text-blue-500 hover:text-blue-700">
+                            <FaEye />
+                          </button>
+                        </td>
                         <td className="px-4 py-2 text-sm">₱{parseFloat(order.total).toFixed(2)}</td>
                         <td className="px-4 py-2 text-sm">{order.location}</td>
+                        <td className="px-4 py-2 text-sm">{order.phone}</td>
                         <td className="px-4 py-2 text-sm font-semibold text-green-600">{order.status}</td>
                       </tr>
                     ))
@@ -168,6 +191,63 @@ const AdminHistory = () => {
           )}
         </div>
       </div>
+
+      {/* Order Details Popup */}
+      {selectedOrder && (
+        <div className="fixed inset-0 bg-opacity-50 backdrop-blur-xs flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded-lg shadow-lg w-[600px]">
+            {/* Order Summary */}
+            <div className="border-b pb-2 mb-4">
+              <p className="text-sm">
+                <span className="font-bold text-blue-700">Order number:</span> {selectedOrder.order_id}
+              </p>
+              <p className="text-sm">
+                <span className="font-bold text-blue-700">Date:</span> {selectedOrder.date}
+              </p>
+              <p className="text-sm">
+                <span className="font-bold text-blue-700">Total cost:</span> ₱{parseFloat(selectedOrder.total).toFixed(2)}
+              </p>
+              <p className="text-sm">
+                <span className="font-bold text-blue-700">Service option:</span> {selectedOrder.shipping_method || "N/A"}
+              </p>
+            </div>
+
+            {/* Order Items Table */}
+            <div>
+              <div className="grid grid-cols-4 font-semibold text-gray-700 border-b pb-2">
+                <p>Food</p>
+                <p>Size</p>
+                <p>Quantity</p>
+                <p>Price</p>
+              </div>
+
+              {selectedOrder.items && selectedOrder.items.length > 0 ? (
+                selectedOrder.items.map((item, index) => (
+                  <div key={index} className="grid grid-cols-4 text-sm py-2 border-b">
+                    <p>{item.food_name || item.item_name || "Unknown item"}</p>
+                    <p>{item.size || "-"}</p>
+                    <p>{item.quantity || 0}</p>
+                    <p>₱{typeof item.price === 'number' ? item.price.toFixed(2) : 
+                      (parseFloat(item.price) ? parseFloat(item.price).toFixed(2) : "0.00")}</p>
+                  </div>
+                ))
+              ) : (
+                <div className="text-center py-4 text-gray-500">No item details available</div>
+              )}
+            </div>
+
+            {/* Close Button */}
+            <div className="flex justify-end mt-4">
+              <button
+                onClick={() => setSelectedOrder(null)}
+                className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-700"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
