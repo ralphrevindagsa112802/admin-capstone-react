@@ -9,6 +9,7 @@ import AdminDashboard from './AdminDashboard'
 import AdminMenu from './AdminMenu'
 import AdminFeedback from './AdminFeedback'
 import AdminHistory from './AdminHistory'
+import AdminAnalytics from './AdminAnalytics'
 import AdminRequireAuth from './components/AdminRequireAuth';
 
 
@@ -31,6 +32,10 @@ const router = createBrowserRouter([{
   }, {
     path: '/history',
     element: <AdminRequireAuth><AdminHistory/></AdminRequireAuth>,
+    errorElement: <NotFound/>
+  },  {
+    path: '/analytics',
+    element: <AdminRequireAuth><AdminAnalytics/></AdminRequireAuth>,
     errorElement: <NotFound/>
   }]);
   

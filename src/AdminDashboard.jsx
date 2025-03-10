@@ -6,17 +6,23 @@ import { FaEllipsisV } from "react-icons/fa";
 const AdminDashboard = () => {
     const navigate = useNavigate();
     const [orders, setOrders] = useState([]);
+    const [filteredOrders, setFilteredOrders] = useState([]);
     const [openDropdown, setOpenDropdown] = useState(null);
     const [selectedOrders, setSelectedOrders] = useState([]);
     const [selectedOrder, setSelectedOrder] = useState(null);
     const [orderStatuses, setOrderStatuses] = useState({});
     const [isProcessing, setIsProcessing] = useState(false);
 
+    // Date filter states
+    const [showCalendar, setShowCalendar] = useState(false);
+    const [selectedDate, setSelectedDate] = useState(null);
+    const [isFiltered, setIsFiltered] = useState(false);
+
     // ✅ Fetch order status when component mounts
     useEffect(() => {
         const fetchStatuses = async () => {
             const updatedStatuses = {};
-            for (const order of orders) {
+            for (const order of filteredOrders) {
                 try {
                     const response = await fetch(`https://yappari-coffee-bar.shop/api/updateOrderStatus.php?order_id=${order.orders_id}`, {
                         method: "GET",
@@ -39,7 +45,7 @@ const AdminDashboard = () => {
         };
 
         fetchStatuses();
-    }, [orders]);
+    }, [filteredOrders]);
 
     // ✅ Toggle dropdown
     const handleDropdownToggle = (orderId) => {
@@ -83,28 +89,29 @@ const AdminDashboard = () => {
     const saveOrderToHistory = async (orderId) => {
         try {
             // First, get the current order details to save in history
-            const orderToSave = orders.find(order => order.orders_id === orderId);
-            
+            const orderToSave = filteredOrders.find(order => order.orders_id === orderId);
+
             if (!orderToSave) {
                 console.error(`Order with ID ${orderId} not found in current orders list`);
                 return { success: false, message: "Order not found in current list" };
             }
-            
+
             // Send data matching what the backend expects
             const response = await fetch("https://yappari-coffee-bar.shop/api/saveOrderHistory.php", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 credentials: "include",
-                body: JSON.stringify({ 
+                body: JSON.stringify({
                     order_ids: [orderId] // Send as an array of order IDs
                 }),
             });
-    
+
             const data = await response.json();
-    
+
             if (data.success) {
                 // Remove the order from the active orders list
                 setOrders((prevOrders) => prevOrders.filter(order => order.orders_id !== orderId));
+                setFilteredOrders((prevOrders) => prevOrders.filter(order => order.orders_id !== orderId));
                 return { success: true };
             } else {
                 console.error("Failed to save order to history:", data.message);
@@ -128,7 +135,7 @@ const AdminDashboard = () => {
         if (!confirmComplete) return;
 
         setIsProcessing(true);
-        
+
         try {
             // Loop through each selected order
             const results = await Promise.all(
@@ -141,19 +148,19 @@ const AdminDashboard = () => {
                             credentials: "include",
                             body: JSON.stringify({ order_id: orderId, status: "Completed" }),
                         }).then(r => r.json());
-                        
+
                         // Even if status update fails, try to save to history directly
                         if (!statusResult.success) {
                             console.warn(`Could not update status for order ${orderId}: ${statusResult.message}`);
                         }
-                        
+
                         // Save to order_history table with direct method
                         const historyResult = await saveOrderToHistory(orderId);
-                        
-                        return { 
-                            orderId, 
-                            success: historyResult.success, 
-                            message: historyResult.message 
+
+                        return {
+                            orderId,
+                            success: historyResult.success,
+                            message: historyResult.message
                         };
                     } catch (error) {
                         console.error(`Error processing order ${orderId}:`, error);
@@ -161,32 +168,32 @@ const AdminDashboard = () => {
                     }
                 })
             );
-            
+
             // Count successes and failures
             const successful = results.filter(result => result.success).length;
             const failed = results.length - successful;
-            
+
             if (failed === 0) {
                 alert(`${successful} order(s) marked as completed and moved to history successfully!`);
-                
+
                 // Clear selection
                 setSelectedOrders([]);
-                
+
                 // Refresh orders list to show current state
                 fetchOrders();
             } else {
                 alert(`${successful} order(s) completed successfully. ${failed} order(s) failed. Check console for details.`);
                 console.error("Failed orders:", results.filter(result => !result.success));
-                
+
                 // Still clear successful orders from selection
                 const successfulOrderIds = results
                     .filter(result => result.success)
                     .map(result => result.orderId);
-                
-                setSelectedOrders(prevSelected => 
+
+                setSelectedOrders(prevSelected =>
                     prevSelected.filter(id => !successfulOrderIds.includes(id))
                 );
-                
+
                 // Refresh orders list
                 fetchOrders();
             }
@@ -198,8 +205,52 @@ const AdminDashboard = () => {
         }
     };
 
+    // Format date to YYYY-MM-DD for comparison
+    const formatDate = (dateString) => {
+        const date = new Date(dateString);
+        return date.toISOString().split('T')[0];
+    };
 
-    //fetch order
+    // Handle date selection from calendar
+    const handleDateSelection = (date) => {
+        setSelectedDate(date);
+    };
+
+    // Apply the date filter
+    const applyDateFilter = () => {
+        if (!selectedDate) {
+            setFilteredOrders(orders);
+            setIsFiltered(false);
+            setShowCalendar(false);
+            return;
+        }
+
+        const selected = formatDate(selectedDate);
+        const filtered = orders.filter(order => {
+            const orderDate = formatDate(order.created_at);
+            return orderDate === selected;
+        });
+
+        setFilteredOrders(filtered);
+        setIsFiltered(true);
+        setShowCalendar(false);
+        setSelectedOrders([]); // Clear selections when filtering
+    };
+
+    // Clear the date filter
+    const clearDateFilter = () => {
+        setSelectedDate(null);
+        setFilteredOrders(orders);
+        setIsFiltered(false);
+        setShowCalendar(false);
+    };
+
+    // Toggle calendar visibility
+    const toggleCalendar = () => {
+        setShowCalendar(!showCalendar);
+    };
+
+    // fetch order
     const fetchOrders = async () => {
         try {
             const response = await fetch("https://yappari-coffee-bar.shop/api/fetchOrderAdmin.php", {
@@ -216,6 +267,7 @@ const AdminDashboard = () => {
 
             if (data.success) {
                 setOrders(data.orders);
+                setFilteredOrders(data.orders); // Initialize filtered orders with all orders
             } else {
                 console.error("Failed to fetch orders:", data.message);
             }
@@ -251,18 +303,143 @@ const AdminDashboard = () => {
 
     // Function to handle "Select All" checkbox
     const handleSelectAll = () => {
-        if (selectedOrders.length === orders.length) {
+        if (selectedOrders.length === filteredOrders.length) {
             setSelectedOrders([]); // Deselect all
         } else {
-            setSelectedOrders(orders.map((order) => order.orders_id)); // Select all
+            setSelectedOrders(filteredOrders.map((order) => order.orders_id)); // Select all
         }
     };
 
-    //view details
+    // view details
     const handleViewDetails = (order) => {
         setSelectedOrder(order);
     };
 
+    // Calendar component
+    const Calendar = ({ onDateSelect, onApply, onClose }) => {
+        const [currentMonth, setCurrentMonth] = useState(new Date());
+        const [localSelectedDate, setLocalSelectedDate] = useState(selectedDate);
+
+        // Get days in month
+        const getDaysInMonth = (month, year) => {
+            return new Date(year, month + 1, 0).getDate();
+        };
+
+        // Get first day of month (0 = Sunday, 1 = Monday, etc)
+        const getFirstDayOfMonth = (month, year) => {
+            return new Date(year, month, 1).getDay();
+        };
+
+        // Navigate to previous month
+        const prevMonth = () => {
+            setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() - 1));
+        };
+
+        // Navigate to next month
+        const nextMonth = () => {
+            setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1));
+        };
+
+        // Select a date
+        const selectDate = (day) => {
+            const date = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), day);
+            setLocalSelectedDate(date);
+            onDateSelect(date);
+        };
+
+        // Format date for display
+        const formatDateDisplay = (date) => {
+            if (!date) return '';
+            const options = { year: 'numeric', month: 'long', day: 'numeric' };
+            return date.toLocaleDateString('en-US', options);
+        };
+
+        // Apply the selected date
+        const handleApply = () => {
+            onApply();
+        };
+
+        // Render calendar days
+        const renderDays = () => {
+            const daysInMonth = getDaysInMonth(currentMonth.getMonth(), currentMonth.getFullYear());
+            const firstDayOfMonth = getFirstDayOfMonth(currentMonth.getMonth(), currentMonth.getFullYear());
+
+            const days = [];
+            // Empty cells for days before start of month
+            for (let i = 0; i < firstDayOfMonth; i++) {
+                days.push(<div key={`empty-${i}`} className="p-2"></div>);
+            }
+
+            // Days of the month
+            for (let day = 1; day <= daysInMonth; day++) {
+                const date = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), day);
+                const isSelected = localSelectedDate &&
+                    date.getDate() === localSelectedDate.getDate() &&
+                    date.getMonth() === localSelectedDate.getMonth() &&
+                    date.getFullYear() === localSelectedDate.getFullYear();
+
+                days.push(
+                    <div
+                        key={day}
+                        onClick={() => selectDate(day)}
+                        className={`p-2 text-center cursor-pointer hover:bg-gray-200 ${isSelected ? 'bg-blue-600 text-white rounded-full' : ''
+                            }`}
+                    >
+                        {day}
+                    </div>
+                );
+            }
+
+            return days;
+        };
+
+        // Month name
+        const monthName = currentMonth.toLocaleString('default', { month: 'long', year: 'numeric' });
+
+        return (
+            <div className="absolute right-0 mt-2 bg-white shadow-lg rounded-lg p-4 z-50 w-80">
+                <div className="flex justify-between items-center mb-4">
+                    <button onClick={prevMonth} className="p-1">&lt;</button>
+                    <h3 className="font-semibold">{monthName}</h3>
+                    <button onClick={nextMonth} className="p-1">&gt;</button>
+                </div>
+
+                <div className="grid grid-cols-7 gap-1 mb-2">
+                    {['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'].map(day => (
+                        <div key={day} className="text-center text-gray-500 text-xs p-1">{day}</div>
+                    ))}
+                </div>
+
+                <div className="grid grid-cols-7 gap-1">
+                    {renderDays()}
+                </div>
+
+                <div className="mt-4 flex justify-between">
+                    <div>
+                        {localSelectedDate && (
+                            <div className="text-sm">
+                                Selected: {formatDateDisplay(localSelectedDate)}
+                            </div>
+                        )}
+                    </div>
+                    <div className="flex space-x-2">
+                        <button
+                            onClick={onClose}
+                            className="px-3 py-1 text-sm border border-gray-300 rounded"
+                        >
+                            Cancel
+                        </button>
+                        <button
+                            onClick={handleApply}
+                            className="px-3 py-1 text-sm bg-blue-600 text-white rounded"
+                        >
+                            Apply
+                        </button>
+                    </div>
+                </div>
+            </div>
+        );
+    };
 
     return (
         <div className="flex flex-col h-screen bg-[#DCDEEA]">
@@ -306,6 +483,9 @@ const AdminDashboard = () => {
                         >
                             <span>Order History</span>
                         </Link>
+                        <Link to="/analytics" className="font-bold border-l-2 border-black hover:border-[#1C359A] sidebar-link flex items-center justify-center space-x-2 p-3 hover:bg-gray-200 text-gray-800">
+                            <span>Admin Analytics</span>
+                        </Link>
                     </nav>
 
                     {/* Logout Button */}
@@ -320,7 +500,7 @@ const AdminDashboard = () => {
 
                 <main className="p-6 w-full overflow-auto">
                     {/* Header Section */}
-                    <div className="w-full flex justify-between">
+                    <div className="w-full flex justify-between items-center">
                         <div className="text-[#1C359A] text-lg font-bold">
                             Order Management
                         </div>
@@ -329,42 +509,77 @@ const AdminDashboard = () => {
                                 onClick={handleCompleteOrders}
                                 disabled={isProcessing || selectedOrders.length === 0}
                                 className={`px-4 py-2 border-2 border-[#1C359A] font-bold rounded-md 
-                                ${(isProcessing || selectedOrders.length === 0) 
-                                  ? 'bg-gray-300 border-gray-400 text-gray-600 cursor-not-allowed' 
-                                  : 'text-black hover:bg-white'}`}
+                                ${(isProcessing || selectedOrders.length === 0)
+                                        ? 'bg-gray-300 border-gray-400 text-gray-600 cursor-not-allowed'
+                                        : 'text-black hover:bg-white'}`}
                             >
                                 {isProcessing ? "Processing..." : `Complete (${selectedOrders.length})`}
                             </button>
 
-                            <button className="px-4 py-2 border-2 border-[#1C359A] text-black font-bold rounded-md flex items-center space-x-2 hover:bg-white">
-                                <svg
-                                    xmlns="http://www.w3.org/2000/svg"
-                                    fill="none"
-                                    viewBox="0 0 24 24"
-                                    strokeWidth="1.5"
-                                    stroke="currentColor"
-                                    className="w-5 h-5"
+                            <div className="relative">
+                                <button
+                                    onClick={toggleCalendar}
+                                    className="px-4 py-2 border-2 border-[#1C359A] text-black font-bold rounded-md flex items-center space-x-2 hover:bg-white"
                                 >
-                                    <path
-                                        strokeLinecap="round"
-                                        strokeLinejoin="round"
-                                        d="M10.5 6h3m-4.5 6h6m-7.5 6h9"
+                                    <svg
+                                        xmlns="http://www.w3.org/2000/svg"
+                                        fill="none"
+                                        viewBox="0 0 24 24"
+                                        strokeWidth="1.5"
+                                        stroke="currentColor"
+                                        className="w-5 h-5"
+                                    >
+                                        <path
+                                            strokeLinecap="round"
+                                            strokeLinejoin="round"
+                                            d="M10.5 6h3m-4.5 6h6m-7.5 6h9"
+                                        />
+                                    </svg>
+                                    <span>Filter</span>
+                                </button>
+
+                                {showCalendar && (
+                                    <Calendar
+                                        onDateSelect={handleDateSelection}
+                                        onApply={applyDateFilter}
+                                        onClose={() => setShowCalendar(false)}
                                     />
-                                </svg>
-                                <span>Filter</span>
-                            </button>
+                                )}
+                            </div>
+
+                            {isFiltered && (
+                                <button
+                                    onClick={clearDateFilter}
+                                    className="px-4 py-2 border-2 border-red-500 text-red-500 font-bold rounded-md hover:bg-red-50"
+                                >
+                                    Clear Filter
+                                </button>
+                            )}
                         </div>
                     </div>
+
+                    {/* Filter indicator */}
+                    {isFiltered && (
+                        <div className="mt-2 p-2 bg-blue-50 text-blue-700 rounded-md flex items-center">
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
+                            </svg>
+                            <span>
+                                Filtering orders from: {selectedDate?.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
+                                {filteredOrders.length === 0 ? ' (No orders found)' : ` (${filteredOrders.length} orders)`}
+                            </span>
+                        </div>
+                    )}
 
                     <div className="p-2 w-full mt-6 rounded-2xl">
                         <table className="w-full bg-white opacity-90 rounded-2xl">
                             <thead>
                                 <tr className="border-t border-4 border-[#DCDEEA]">
                                     <th className="p-3 text-left text-[#808080]">
-                                        <input 
-                                            type="checkbox" 
-                                            checked={selectedOrders.length === orders.length && orders.length > 0} 
-                                            onChange={handleSelectAll} 
+                                        <input
+                                            type="checkbox"
+                                            checked={selectedOrders.length === filteredOrders.length && filteredOrders.length > 0}
+                                            onChange={handleSelectAll}
                                         />
                                     </th>
                                     <th className="p-3 text-left text-sm text-[#808080]">Order #</th>
@@ -380,14 +595,14 @@ const AdminDashboard = () => {
                                 </tr>
                             </thead>
                             <tbody>
-                                {orders.length > 0 ? (
-                                    orders.map((order) => (
+                                {filteredOrders.length > 0 ? (
+                                    filteredOrders.map((order) => (
                                         <tr key={order.orders_id} className="border-t border-4 border-[#DCDEEA] hover:bg-gray-100">
                                             <td className="p-3">
-                                                <input 
-                                                    type="checkbox" 
-                                                    checked={selectedOrders.includes(order.orders_id)} 
-                                                    onChange={() => handleCheckboxChange(order.orders_id)} 
+                                                <input
+                                                    type="checkbox"
+                                                    checked={selectedOrders.includes(order.orders_id)}
+                                                    onChange={() => handleCheckboxChange(order.orders_id)}
                                                 />
                                             </td>
                                             <td className="p-3 text-sm">{order.orders_id}</td>
@@ -404,7 +619,7 @@ const AdminDashboard = () => {
                                             <td className="p-3 text-sm">₱{order.total_amount}</td>
                                             <td className="p-3 font-semibold">
                                                 {orderStatuses[order.orders_id] || "Loading..."}
-                                            </td>                        
+                                            </td>
                                             <td className="p-3 relative">
                                                 <button onClick={() => handleDropdownToggle(order.orders_id)} className="text-gray-600 hover:text-black">
                                                     <FaEllipsisV />
@@ -430,8 +645,12 @@ const AdminDashboard = () => {
                                         </tr>
                                     ))
                                 ) : (
-                                    <tr>
-                                        <td colSpan="10" className="text-center p-3">No orders found</td>
+                                    <tr className='border-t border-4 border-[#DCDEEA] hover:bg-gray-100'>
+                                        <td colSpan="11" className="text-center p-3">
+                                            {isFiltered
+                                                ? "No orders found for the selected date"
+                                                : "No orders found"}
+                                        </td>
                                     </tr>
                                 )}
                             </tbody>
