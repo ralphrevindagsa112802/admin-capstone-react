@@ -253,3 +253,5 @@ const AdminHistory = () => {
 };
 
 export default AdminHistory;
+
+
