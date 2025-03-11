@@ -12,6 +12,8 @@ const AdminDashboard = () => {
     const [selectedOrder, setSelectedOrder] = useState(null);
     const [orderStatuses, setOrderStatuses] = useState({});
     const [isProcessing, setIsProcessing] = useState(false);
+    // New state to track completed orders
+    const [completedOrders, setCompletedOrders] = useState([]);
 
     // Date filter states
     const [showCalendar, setShowCalendar] = useState(false);
@@ -72,9 +74,11 @@ const AdminDashboard = () => {
                 }));
                 setOpenDropdown(null);
 
-                // ✅ Move to order history if status is 'Completed'
-                if (status === "Completed") {
-                    await saveOrderToHistory(orderId);
+                // ✅ Move to order history if status is 'Completed' or 'Cancelled'
+                if (status === "Completed" || status === "Cancelled") {
+                    await saveOrderToHistory(orderId, status);
+                    // Mark this order as completed
+                    setCompletedOrders(prev => [...prev, orderId]);
                 }
             } else {
                 alert("Error: " + data.message);
@@ -85,8 +89,8 @@ const AdminDashboard = () => {
         }
     };
 
-    // Direct method to save to history without changing status
-    const saveOrderToHistory = async (orderId) => {
+    // Direct method to save to history with specified status
+    const saveOrderToHistory = async (orderId, status) => {
         try {
             // First, get the current order details to save in history
             const orderToSave = filteredOrders.find(order => order.orders_id === orderId);
@@ -102,7 +106,8 @@ const AdminDashboard = () => {
                 headers: { "Content-Type": "application/json" },
                 credentials: "include",
                 body: JSON.stringify({
-                    order_ids: [orderId] // Send as an array of order IDs
+                    order_ids: [orderId], // Send as an array of order IDs
+                    status: status // Include the status to be saved in history
                 }),
             });
 
@@ -112,6 +117,8 @@ const AdminDashboard = () => {
                 // Remove the order from the active orders list
                 setOrders((prevOrders) => prevOrders.filter(order => order.orders_id !== orderId));
                 setFilteredOrders((prevOrders) => prevOrders.filter(order => order.orders_id !== orderId));
+                // Add to completed orders list
+                setCompletedOrders(prev => [...prev, orderId]);
                 return { success: true };
             } else {
                 console.error("Failed to save order to history:", data.message);
@@ -130,6 +137,15 @@ const AdminDashboard = () => {
             return;
         }
 
+        // Check if any of the selected orders were already completed
+        const alreadyCompletedOrders = selectedOrders.filter(id => completedOrders.includes(id));
+        if (alreadyCompletedOrders.length > 0) {
+            alert(`Order(s) #${alreadyCompletedOrders.join(', ')} have already been completed and cannot be processed again.`);
+            // Remove already completed orders from selection
+            setSelectedOrders(prev => prev.filter(id => !alreadyCompletedOrders.includes(id)));
+            return;
+        }
+
         // Confirm before proceeding
         const confirmComplete = window.confirm(`Are you sure you want to mark ${selectedOrders.length} order(s) as complete and move to history?`);
         if (!confirmComplete) return;
@@ -141,12 +157,24 @@ const AdminDashboard = () => {
             const results = await Promise.all(
                 selectedOrders.map(async (orderId) => {
                     try {
-                        // First update the status to "Completed"
+                        // Skip if order was already completed
+                        if (completedOrders.includes(orderId)) {
+                            return { orderId, success: false, message: "Order already completed" };
+                        }
+
+                        // Get the current status of the order
+                        const currentStatus = orderStatuses[orderId] || "Unknown";
+                        
+                        // Determine the final status to save in history
+                        // If the order is cancelled, preserve that status
+                        const finalStatus = currentStatus === "Cancelled" ? "Cancelled" : "Completed";
+
+                        // First update the status 
                         const statusResult = await fetch("https://yappari-coffee-bar.shop/api/updateOrderStatus.php", {
                             method: "POST",
                             headers: { "Content-Type": "application/json" },
                             credentials: "include",
-                            body: JSON.stringify({ order_id: orderId, status: "Completed" }),
+                            body: JSON.stringify({ order_id: orderId, status: finalStatus }),
                         }).then(r => r.json());
 
                         // Even if status update fails, try to save to history directly
@@ -154,13 +182,19 @@ const AdminDashboard = () => {
                             console.warn(`Could not update status for order ${orderId}: ${statusResult.message}`);
                         }
 
-                        // Save to order_history table with direct method
-                        const historyResult = await saveOrderToHistory(orderId);
+                        // Save to order_history table with direct method, passing the correct status
+                        const historyResult = await saveOrderToHistory(orderId, finalStatus);
+
+                        // Mark as completed
+                        if (historyResult.success) {
+                            setCompletedOrders(prev => [...prev, orderId]);
+                        }
 
                         return {
                             orderId,
                             success: historyResult.success,
-                            message: historyResult.message
+                            message: historyResult.message,
+                            status: finalStatus
                         };
                     } catch (error) {
                         console.error(`Error processing order ${orderId}:`, error);
@@ -174,7 +208,7 @@ const AdminDashboard = () => {
             const failed = results.length - successful;
 
             if (failed === 0) {
-                alert(`${successful} order(s) marked as completed and moved to history successfully!`);
+                alert(`${successful} order(s) processed and moved to history successfully!`);
 
                 // Clear selection
                 setSelectedOrders([]);
@@ -182,7 +216,7 @@ const AdminDashboard = () => {
                 // Refresh orders list to show current state
                 fetchOrders();
             } else {
-                alert(`${successful} order(s) completed successfully. ${failed} order(s) failed. Check console for details.`);
+                alert(`${successful} order(s) processed successfully. ${failed} order(s) failed. Check console for details.`);
                 console.error("Failed orders:", results.filter(result => !result.success));
 
                 // Still clear successful orders from selection
@@ -278,7 +312,18 @@ const AdminDashboard = () => {
 
     useEffect(() => {
         fetchOrders();
+        
+        // Load completed orders from localStorage when component mounts
+        const savedCompletedOrders = localStorage.getItem('completedOrders');
+        if (savedCompletedOrders) {
+            setCompletedOrders(JSON.parse(savedCompletedOrders));
+        }
     }, []);
+
+    // Save completed orders to localStorage whenever it changes
+    useEffect(() => {
+        localStorage.setItem('completedOrders', JSON.stringify(completedOrders));
+    }, [completedOrders]);
 
     const handleLogout = async () => {
         try {
@@ -294,6 +339,12 @@ const AdminDashboard = () => {
 
     // Function to handle individual checkbox selection
     const handleCheckboxChange = (orderId) => {
+        // Don't allow selection if already completed
+        if (completedOrders.includes(orderId)) {
+            alert(`Order #${orderId} has already been completed and cannot be selected.`);
+            return;
+        }
+
         setSelectedOrders((prevSelected) =>
             prevSelected.includes(orderId)
                 ? prevSelected.filter((id) => id !== orderId)
@@ -306,7 +357,12 @@ const AdminDashboard = () => {
         if (selectedOrders.length === filteredOrders.length) {
             setSelectedOrders([]); // Deselect all
         } else {
-            setSelectedOrders(filteredOrders.map((order) => order.orders_id)); // Select all
+            // Select all that haven't been completed
+            const selectableOrders = filteredOrders
+                .filter(order => !completedOrders.includes(order.orders_id))
+                .map(order => order.orders_id);
+            
+            setSelectedOrders(selectableOrders);
         }
     };
 
@@ -578,7 +634,7 @@ const AdminDashboard = () => {
                                     <th className="p-3 text-left text-[#808080]">
                                         <input
                                             type="checkbox"
-                                            checked={selectedOrders.length === filteredOrders.length && filteredOrders.length > 0}
+                                            checked={selectedOrders.length === filteredOrders.filter(order => !completedOrders.includes(order.orders_id)).length && filteredOrders.length > 0}
                                             onChange={handleSelectAll}
                                         />
                                     </th>
@@ -594,6 +650,7 @@ const AdminDashboard = () => {
                                     <th className="p-3 text-left text-sm text-[#808080]">Update</th>
                                 </tr>
                             </thead>
+                            
                             <tbody>
                                 {filteredOrders.length > 0 ? (
                                     filteredOrders.map((order) => (
@@ -629,7 +686,7 @@ const AdminDashboard = () => {
                                                     <div className="absolute right-0 mt-2 w-48 bg-white border border-gray-300 shadow-md rounded-lg z-50">
                                                         <p className="text-blue-600 text-center font-semibold py-2">Update Status</p>
                                                         <div className="flex flex-col">
-                                                            {["Pending", "Processing", "Out For Delivery", "Payment accepted", "Preparing", "Ready to pickup", "Out of delivery", "Completed", "Order accepted"].map((status) => (
+                                                            {["Pending", "Processing", "Out For Delivery", "Payment accepted", "Preparing", "Ready to pickup", "Out of delivery", "Completed", "Order accepted", "Cancelled"].map((status) => (
                                                                 <button
                                                                     key={status}
                                                                     onClick={() => handleStatusUpdate(order.orders_id, status)}
@@ -699,6 +756,8 @@ const AdminDashboard = () => {
                         </div>
 
                         {/* Close Button */}
+
+                                                {/* Close Button */}
                         <div className="flex justify-end mt-4">
                             <button
                                 onClick={() => setSelectedOrder(null)}
@@ -715,3 +774,6 @@ const AdminDashboard = () => {
 };
 
 export default AdminDashboard;
+
+
+
