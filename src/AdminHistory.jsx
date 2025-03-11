@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
-import { FaEye } from "react-icons/fa"; // Make sure to import this icon
+import { FaEye } from "react-icons/fa";
 
 const AdminHistory = () => {
   const navigate = useNavigate();
@@ -9,6 +9,25 @@ const AdminHistory = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [selectedOrder, setSelectedOrder] = useState(null); // For popup details
+
+  // Function to remove duplicate orders, keeping only the most recent one
+  const removeDuplicateOrders = (orders) => {
+    // Create a map to store unique orders by order_id
+    const uniqueOrderMap = new Map();
+    
+    // Process each order
+    orders.forEach(order => {
+      const existingOrder = uniqueOrderMap.get(order.order_id);
+      
+      // If this order_id doesn't exist in our map or the current order is newer, update the map
+      if (!existingOrder || new Date(order.date) > new Date(existingOrder.date)) {
+        uniqueOrderMap.set(order.order_id, order);
+      }
+    });
+    
+    // Convert map values back to array
+    return Array.from(uniqueOrderMap.values());
+  };
 
   // Fetch order history when component mounts
   useEffect(() => {
@@ -21,7 +40,9 @@ const AdminHistory = () => {
         );
         
         if (response.data.success) {
-          setOrderHistory(response.data.orders);
+          // Remove duplicates by order_id, keeping only the most recent entry
+          const uniqueOrders = removeDuplicateOrders(response.data.orders);
+          setOrderHistory(uniqueOrders);
         } else {
           setError(response.data.message || "Failed to fetch order history");
         }
@@ -129,7 +150,6 @@ const AdminHistory = () => {
           {/* Header Section */}
           <div className="w-full flex justify-between mb-4">
             <div className="text-[#1C359A] text-lg font-bold">Order History</div>
-            
           </div>
 
           {/* Loading State */}
@@ -185,7 +205,7 @@ const AdminHistory = () => {
                     ))
                   ) : (
                     <tr>
-                      <td colSpan="8" className="px-4 py-2 text-center">No completed orders found</td>
+                      <td colSpan="9" className="px-4 py-2 text-center">No completed orders found</td>
                     </tr>
                   )}
                 </tbody>
@@ -197,7 +217,7 @@ const AdminHistory = () => {
 
       {/* Order Details Popup */}
       {selectedOrder && (
-        <div className="fixed inset-0 bg-opacity-50 backdrop-blur-xs flex items-center justify-center z-50">
+        <div className="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-xs flex items-center justify-center z-50">
           <div className="bg-white p-6 rounded-lg shadow-lg w-[600px]">
             {/* Order Summary */}
             <div className="border-b pb-2 mb-4">
@@ -256,5 +276,3 @@ const AdminHistory = () => {
 };
 
 export default AdminHistory;
-
-
