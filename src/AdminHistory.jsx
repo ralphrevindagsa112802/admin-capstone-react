@@ -217,7 +217,7 @@ const AdminHistory = () => {
 
       {/* Order Details Popup */}
       {selectedOrder && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-xs flex items-center justify-center z-50">
+        <div className="fixed inset-0 bg-opacity-50 backdrop-blur-xs flex items-center justify-center z-50">
           <div className="bg-white p-6 rounded-lg shadow-lg w-[600px]">
             {/* Order Summary */}
             <div className="border-b pb-2 mb-4">
