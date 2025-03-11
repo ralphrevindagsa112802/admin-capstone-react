@@ -41,7 +41,7 @@ const AdminFeedback = () => {
   };
 
   return (
-    <div className="flex flex-col h-screen bg-[#DCDEEA]">
+    <div className="flex flex-col h-screen">
       {/* Navbar */}
       <div className="w-full flex items-center justify-between py-4 px-12 shadow-md bg-white">
         <div className="flex items-center justify-center md:justify-start w-full md:w-auto">
@@ -51,7 +51,7 @@ const AdminFeedback = () => {
       </div>
 
       {/* Sidebar & Main Content */}
-      <div className="flex flex-row h-full">
+      <div className="flex flex-row h-full bg-[#DCDEEA]">
         {/* Sidebar */}
         <div className="w-52 flex-none bg-white shadow-md h-full flex flex-col p-4">
           <nav className="flex flex-col space-y-4">
@@ -61,7 +61,7 @@ const AdminFeedback = () => {
             <Link to="/menu" className="font-bold border-l-2 border-black hover:border-[#1C359A] sidebar-link flex items-center justify-center space-x-2 p-3 hover:bg-gray-200 text-gray-800">
               <span>Menu</span>
             </Link>
-            <Link to="/feedback" className="font-bold border-l-2 border-black hover:border-[#1C359A] sidebar-link flex items-center justify-center space-x-2 p-3 hover:bg-gray-200 text-gray-800">
+            <Link to="/feedback" className="font-bold border-l-2 border-[#1C359A] hover:border-[#1C359A] sidebar-link flex items-center justify-center space-x-2 p-3 bg-gray-200 text-[#1C359A]">
               <span>Feedback</span>
             </Link>
             <Link to="/history" className="font-bold border-l-2 border-black hover:border-[#1C359A] sidebar-link flex items-center justify-center space-x-2 p-3 hover:bg-gray-200 text-gray-800">

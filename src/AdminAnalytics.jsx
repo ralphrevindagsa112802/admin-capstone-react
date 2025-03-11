@@ -11,8 +11,13 @@ const AdminAnalytics = () => {
   const [userCount, setUserCount] = useState(0);
   const [totalOrders, setTotalOrders] = useState(0);
   const [totalSales, setTotalSales] = useState(0);
-
-  
+  const [activeTab, setActiveTab] = useState("complete");
+  const [completeOrders, setCompleteOrders] = useState([]);
+  const [loadingOrders, setLoadingOrders] = useState(false);
+  const [ordersError, setOrdersError] = useState(null);
+  const [dishes, setDishes] = useState([]);
+  const [loadingDishes, setLoadingDishes] = useState(false);
+  const [dishesError, setDishesError] = useState(null);
 
   // Fetch analytics data based on selected time range
   useEffect(() => {
@@ -37,23 +42,23 @@ const AdminAnalytics = () => {
   }, [timeRange]);
 
 
-    // Fetch total sales from API
-    useEffect(() => {
-      const fetchTotalSales = async () => {
-        try {
-          const response = await axios.get(
-            "https://yappari-coffee-bar.shop/api/total_sales",
-            { withCredentials: true }
-          );
-          console.log("Total Sales API Response:", response.data); // Debugging
-          setTotalSales(response.data.total_sales);
-        } catch (error) {
-          console.error("Failed to fetch total sales:", error);
-        }
-      };
-  
-      fetchTotalSales();
-    }, []);
+  // Fetch total sales from API
+  useEffect(() => {
+    const fetchTotalSales = async () => {
+      try {
+        const response = await axios.get(
+          "https://yappari-coffee-bar.shop/api/total_sales",
+          { withCredentials: true }
+        );
+        console.log("Total Sales API Response:", response.data); // Debugging
+        setTotalSales(response.data.total_sales);
+      } catch (error) {
+        console.error("Failed to fetch total sales:", error);
+      }
+    };
+
+    fetchTotalSales();
+  }, []);
 
 
   // Fetch user count from database
@@ -73,8 +78,8 @@ const AdminAnalytics = () => {
     fetchUserCount();
   }, []);
 
-   // Fetch total orders from database
-   useEffect(() => {
+  // Fetch total orders from database
+  useEffect(() => {
     const fetchTotalOrders = async () => {
       try {
         const response = await axios.get(
@@ -90,6 +95,123 @@ const AdminAnalytics = () => {
 
     fetchTotalOrders();
   }, []);
+
+  // Fetch complete orders from database
+// Modify the React component's fetchCompleteOrders function:
+useEffect(() => {
+  const fetchCompleteOrders = async () => {
+    if (activeTab === "complete") {
+      try {
+        setLoadingOrders(true);
+        const response = await axios.get(
+          "https://yappari-coffee-bar.shop/api/complete_orders",
+          { withCredentials: true }
+        );
+        
+        // Handle both response formats
+        const orders = response.data.orders || response.data;
+        
+        // Check if we actually got an array
+        if (Array.isArray(orders)) {
+          setCompleteOrders(orders);
+        } else {
+          console.error("Unexpected response format:", response.data);
+          setCompleteOrders([]);
+          setOrdersError("Received invalid data format from server");
+        }
+        
+        setOrdersError(null);
+      } catch (error) {
+        console.error("Failed to fetch complete orders:", error);
+        // Add more detailed error info
+        const errorMessage = error.response?.status === 500 
+          ? "Server error occurred. The development team has been notified."
+          : "Failed to load complete orders. Please try again.";
+        setOrdersError(errorMessage);
+        // Could also set empty array to prevent null reference errors
+        setCompleteOrders([]);
+      } finally {
+        setLoadingOrders(false);
+      }
+    }
+  };
+
+  fetchCompleteOrders();
+}, [activeTab]);
+
+
+//cancelled orders
+useEffect(() => {
+  const fetchCancelledOrders = async () => {
+    if (activeTab === "cancelled") {
+      try {
+        setLoadingOrders(true);
+        const response = await axios.get(
+          "https://yappari-coffee-bar.shop/api/cancelled_ordersAdmin",
+          { withCredentials: true }
+        );
+
+        console.log("Cancelled Orders API Response:", response.data); // Debugging
+
+        if (response.data.success && Array.isArray(response.data.orders)) {
+          setCompleteOrders(response.data.orders);
+          setOrdersError(null);
+        } else {
+          console.error("Unexpected API response:", response.data);
+          setOrdersError("Invalid response format from server");
+          setCompleteOrders([]);
+        }
+      } catch (error) {
+        console.error("Fetch Cancelled Orders Error:", error.response?.data || error.message);
+
+        const errorMessage =
+          error.response?.status === 500
+            ? "Server error occurred. Please check logs."
+            : "Failed to load cancelled orders.";
+
+        setOrdersError(errorMessage);
+        setCompleteOrders([]);
+      } finally {
+        setLoadingOrders(false);
+      }
+    }
+  };
+
+  fetchCancelledOrders();
+}, [activeTab]);
+
+//fetch dishes
+useEffect(() => {
+  const fetchDishes = async () => {
+    if (activeTab === "dishes") {
+      try {
+        setLoadingDishes(true);
+        const response = await axios.get("https://yappari-coffee-bar.shop/api/dishesAdmin.php", {
+          withCredentials: true,
+        });
+
+        console.log("Dishes API Response:", response.data);
+
+        if (response.data.success && Array.isArray(response.data.dishes)) {
+          setDishes(response.data.dishes);
+          setDishesError(null);
+        } else {
+          console.error("Unexpected API response:", response.data);
+          setDishes([]);
+          setDishesError("Invalid response format from server");
+        }
+      } catch (error) {
+        console.error("Fetch Dishes Error:", error.response?.data || error.message);
+        setDishesError("Failed to load dishes.");
+        setDishes([]);
+      } finally {
+        setLoadingDishes(false);
+      }
+    }
+  };
+
+  fetchDishes();
+}, [activeTab]);
 
   // handle logout
   const handleLogout = async () => {
@@ -274,8 +396,138 @@ const AdminAnalytics = () => {
     );
   };
 
+  // Render tabs content
+  const renderTabContent = () => {
+    switch (activeTab) {
+      case "complete":
+        return (
+          <div className="bg-white p-6 rounded-lg shadow-md">
+            <h3 className="text-xl font-semibold mb-4">Complete Orders</h3>
+            <div className="text-gray-500">
+              {loadingOrders ? (
+                <p>Loading complete orders...</p>
+              ) : ordersError ? (
+                <p className="text-red-500">{ordersError}</p>
+              ) : completeOrders.length === 0 ? (
+                <p>No complete orders found.</p>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="min-w-full divide-y divide-gray-200">
+                    <thead className="bg-gray-50">
+                      <tr>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Order ID</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Customer</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Amount</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                      </tr>
+                    </thead>
+                    <tbody className="bg-white divide-y divide-gray-200">
+                      {completeOrders.map((order) => (
+                        <tr key={order.id}>
+                          <td className="px-6 py-4 whitespace-nowrap">ORD-{order.order_id.toString().padStart(3, '0')}</td>
+                          <td className="px-6 py-4 whitespace-nowrap">{order.customer_name}</td>
+                          <td className="px-6 py-4 whitespace-nowrap">{new Date(order.date).toLocaleDateString()}</td>
+                          <td className="px-6 py-4 whitespace-nowrap">₱{parseFloat(order.total).toLocaleString()}</td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <span className="px-2 py-1 bg-green-100 text-green-800 rounded-full">
+                              {order.status}
+                            </span>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+          </div>
+        );
+        case "cancelled":
+          return (
+            <div className="bg-white p-6 rounded-lg shadow-md">
+              <h3 className="text-xl font-semibold mb-4">Cancelled Orders</h3>
+              {loadingOrders ? (
+                <p>Loading cancelled orders...</p>
+              ) : ordersError ? (
+                <p className="text-red-500">{ordersError}</p>
+              ) : completeOrders.length === 0 ? (
+                <p>No cancelled orders found.</p>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="min-w-full divide-y divide-gray-200">
+                    <thead className="bg-gray-50">
+                      <tr>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Order ID</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Customer</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Amount</th>
+                      </tr>
+                    </thead>
+                    <tbody className="bg-white divide-y divide-gray-200">
+                      {completeOrders.map((order) => (
+                        <tr key={order.id}>
+                          <td className="px-6 py-4 whitespace-nowrap">ORD-{order.order_id.toString().padStart(3, '0')}</td>
+                          <td className="px-6 py-4 whitespace-nowrap">{order.customer_name}</td>
+                          <td className="px-6 py-4 whitespace-nowrap">{new Date(order.date).toLocaleDateString()}</td>
+                          <td className="px-6 py-4 whitespace-nowrap">₱{parseFloat(order.total).toLocaleString()}</td>
+                         
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+          );
+        
+      case "dishes":
+        return (
+          <div className="bg-white p-6 rounded-lg shadow-md">
+            <h3 className="text-xl font-semibold mb-4">Dishes</h3>
+            {loadingDishes ? (
+              <p>Loading dishes data...</p>
+            ) : dishesError ? (
+              <p className="text-red-500">{dishesError}</p>
+            ) : dishes.length === 0 ? (
+              <p>No dishes found.</p>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="min-w-full divide-y divide-gray-200">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Dish Name</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Category</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Price</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
+                    </tr>
+                  </thead>
+                  <tbody className="bg-white divide-y divide-gray-200">
+                    {dishes.map((dish) => (
+                      <tr key={dish.id}>
+                        <td className="px-6 py-4 whitespace-nowrap">{dish.dish_name}</td>
+                        <td className="px-6 py-4 whitespace-nowrap">{dish.category}</td>
+                        <td className="px-6 py-4 whitespace-nowrap">₱{dish.price}</td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <span className={`px-2 py-1 rounded-md ${dish.status === "Available" ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"}`}>
+                            {dish.status}
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        );
+      default:
+        return null;
+    }
+  };
+
   return (
-    <div className="flex flex-col h-screen bg-[#DCDEEA]">
+    <div className="flex flex-col h-screen ">
       {/* Navbar */}
       <div className="w-full flex items-center justify-between py-4 px-12 shadow-md bg-white">
         <div className="flex items-center justify-center md:justify-start w-full md:w-auto">
@@ -285,7 +537,7 @@ const AdminAnalytics = () => {
       </div>
 
       {/* Sidebar & Main Content */}
-      <div className="flex flex-row h-full">
+      <div className="flex flex-row h-full bg-[#DCDEEA]">
         {/* Sidebar */}
         <div className="w-52 flex-none bg-white shadow-md h-full flex flex-col p-4">
           <nav className="flex flex-col space-y-4">
@@ -304,7 +556,6 @@ const AdminAnalytics = () => {
             <Link to="/analytics" className="font-bold border-l-2 border-[#1C359A] hover:border-[#1C359A] sidebar-link flex items-center justify-center space-x-2 p-3 bg-gray-200 text-[#1C359A]">
               <span>Admin Analytics</span>
             </Link>
-         
           </nav>
           {/* Logout Button */}
           <Link to={"/"} onClick={handleLogout} className='flex justify-center'>
@@ -371,6 +622,42 @@ const AdminAnalytics = () => {
 
           {/* Sales Chart */}
           {renderChart()}
+          
+          {/* Tabbed Interface */}
+          <div className="mt-8">
+            <h2 className="font-semibold text-lg mb-4">Order Analysis</h2>
+            
+            {/* Tabs */}
+            <div className="flex mb-4 border-b">
+              <button 
+                onClick={() => setActiveTab("complete")}
+                className={`py-2 px-4 mr-2 font-medium ${activeTab === "complete" 
+                  ? "text-[#1C359A] border-b-2 border-[#1C359A]" 
+                  : "text-gray-500 hover:text-gray-700"}`}
+              >
+                Complete Orders
+              </button>
+              <button 
+                onClick={() => setActiveTab("cancelled")}
+                className={`py-2 px-4 mr-2 font-medium ${activeTab === "cancelled" 
+                  ? "text-[#1C359A] border-b-2 border-[#1C359A]" 
+                  : "text-gray-500 hover:text-gray-700"}`}
+              >
+                Cancelled Orders
+              </button>
+              <button 
+                onClick={() => setActiveTab("dishes")}
+                className={`py-2 px-4 font-medium ${activeTab === "dishes" 
+                  ? "text-[#1C359A] border-b-2 border-[#1C359A]" 
+                  : "text-gray-500 hover:text-gray-700"}`}
+              >
+                Dishes
+              </button>
+            </div>
+            
+            {/* Tab Content */}
+            {renderTabContent()}
+          </div>
           
           {/* Top Products Table (if data is available) */}
           {analyticsData && analyticsData.topProducts && (

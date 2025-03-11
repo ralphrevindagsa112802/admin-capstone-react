@@ -498,7 +498,7 @@ const AdminDashboard = () => {
     };
 
     return (
-        <div className="flex flex-col h-screen bg-[#DCDEEA]">
+        <div className="flex flex-col h-screen">
             {/* Navbar */}
             <div className="w-full flex items-center justify-between py-4 px-12 shadow-md bg-white">
                 <div className="flex items-center justify-center md:justify-start w-full md:w-auto">
@@ -511,13 +511,13 @@ const AdminDashboard = () => {
                 <div className="text-xl text-[#1C359A] font-bold">Admin</div>
             </div>
 
-            <div className="flex flex-row h-full">
+            <div className="flex flex-row h-full bg-[#DCDEEA]">
                 {/* Sidebar */}
                 <div className="w-52 flex-none bg-white shadow-md h-full flex flex-col p-4">
                     <nav className="flex flex-col space-y-4">
                         <Link
                             to="/dashboard"
-                            className="font-bold border-l-2 border-black hover:border-[#1C359A] sidebar-link flex items-center justify-center space-x-2 p-3 hover:bg-gray-200 text-gray-800"
+                            className="font-bold border-l-2 border-[#1C359A] hover:border-[#1C359A] sidebar-link flex items-center justify-center space-x-2 p-3 bg-gray-200 text-[#1C359A]"
                         >
                             <span>Orders</span>
                         </Link>
@@ -554,7 +554,7 @@ const AdminDashboard = () => {
                     </Link>
                 </div>
 
-                <main className="p-6 w-full overflow-auto">
+                <main className="p-6 w-full overflow-auto bg-[#DCDEEA]">
                     {/* Header Section */}
                     <div className="w-full flex justify-between items-center">
                         <div className="text-[#1C359A] text-lg font-bold">
