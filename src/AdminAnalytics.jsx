@@ -25,23 +25,35 @@ const AdminAnalytics = () => {
       try {
         setLoading(true);
         const response = await axios.get(
-          `https://yappari-coffee-bar.shop/api/analytics?timeRange=${timeRange}`,
-          { withCredentials: true }
+          "https://yappari-coffee-bar.shop/api/analytics.php",
+          {
+            params: { timeRange },
+            withCredentials: true,
+          }
         );
-        setAnalyticsData(response.data);
-        setError(null);
+  
+        console.log("Analytics API Response:", response.data);
+        
+        // Accept the full response object, which contains salesData, totalSales, etc.
+        if (response.data) {
+          setAnalyticsData(response.data);
+          setError(null);
+        } else {
+          setError("Received invalid data format from server");
+          setAnalyticsData(null);
+        }
       } catch (error) {
         console.error("Failed to fetch analytics data:", error);
         setError("Failed to load analytics data. Please try again.");
+        setAnalyticsData(null);
       } finally {
         setLoading(false);
       }
     };
-
+  
     fetchAnalyticsData();
   }, [timeRange]);
-
-
+  
   // Fetch total sales from API
   useEffect(() => {
     const fetchTotalSales = async () => {
@@ -50,16 +62,22 @@ const AdminAnalytics = () => {
           "https://yappari-coffee-bar.shop/api/total_sales",
           { withCredentials: true }
         );
-        console.log("Total Sales API Response:", response.data); // Debugging
-        setTotalSales(response.data.total_sales);
+        console.log("Total Sales API Response:", response.data);
+        
+        if (response.data && response.data.total_sales !== undefined) {
+          setTotalSales(response.data.total_sales);
+        } else {
+          console.error("Invalid total_sales data:", response.data);
+          setTotalSales(0); // Default to 0 if data is invalid
+        }
       } catch (error) {
         console.error("Failed to fetch total sales:", error);
+        setTotalSales(0); // Default to 0 on error
       }
     };
 
     fetchTotalSales();
   }, []);
-
 
   // Fetch user count from database
   useEffect(() => {
@@ -69,9 +87,16 @@ const AdminAnalytics = () => {
           "https://yappari-coffee-bar.shop/api/count",
           { withCredentials: true }
         );
-        setUserCount(response.data.count);
+        
+        if (response.data && response.data.count !== undefined) {
+          setUserCount(response.data.count);
+        } else {
+          console.error("Invalid user count data:", response.data);
+          setUserCount(0); // Default to 0 if data is invalid
+        }
       } catch (error) {
         console.error("Failed to fetch user count:", error);
+        setUserCount(0); // Default to 0 on error
       }
     };
 
@@ -86,10 +111,17 @@ const AdminAnalytics = () => {
           "https://yappari-coffee-bar.shop/api/orders_count",
           { withCredentials: true }
         );
-        console.log("Total Orders API Response:", response.data); // Debugging
-        setTotalOrders(response.data.count);
+        console.log("Total Orders API Response:", response.data);
+        
+        if (response.data && response.data.count !== undefined) {
+          setTotalOrders(response.data.count);
+        } else {
+          console.error("Invalid orders count data:", response.data);
+          setTotalOrders(0); // Default to 0 if data is invalid
+        }
       } catch (error) {
         console.error("Failed to fetch total orders:", error);
+        setTotalOrders(0); // Default to 0 on error
       }
     };
 
@@ -97,123 +129,139 @@ const AdminAnalytics = () => {
   }, []);
 
   // Fetch complete orders from database
-// Modify the React component's fetchCompleteOrders function:
-useEffect(() => {
-  const fetchCompleteOrders = async () => {
-    if (activeTab === "complete") {
-      try {
-        setLoadingOrders(true);
-        const response = await axios.get(
-          "https://yappari-coffee-bar.shop/api/complete_orders",
-          { withCredentials: true }
-        );
-        
-        // Handle both response formats
-        const orders = response.data.orders || response.data;
-        
-        // Check if we actually got an array
-        if (Array.isArray(orders)) {
-          setCompleteOrders(orders);
-        } else {
-          console.error("Unexpected response format:", response.data);
+  useEffect(() => {
+    const fetchCompleteOrders = async () => {
+      if (activeTab === "complete") {
+        try {
+          setLoadingOrders(true);
+          const response = await axios.get(
+            "https://yappari-coffee-bar.shop/api/complete_orders",
+            { withCredentials: true }
+          );
+          
+          console.log("Complete Orders API Response:", response.data);
+          
+          // Handle both response formats
+          let orders = [];
+          if (response.data && response.data.orders) {
+            orders = response.data.orders;
+          } else if (Array.isArray(response.data)) {
+            orders = response.data;
+          } else {
+            console.error("Unexpected response format:", response.data);
+            setOrdersError("Received invalid data format from server");
+            setCompleteOrders([]);
+            setLoadingOrders(false);
+            return;
+          }
+          
+          // Ensure orders is an array
+          if (Array.isArray(orders)) {
+            setCompleteOrders(orders);
+            setOrdersError(null);
+          } else {
+            console.error("Orders is not an array:", orders);
+            setOrdersError("Invalid data format received");
+            setCompleteOrders([]);
+          }
+        } catch (error) {
+          console.error("Failed to fetch complete orders:", error);
+          const errorMessage = error.response?.status === 500 
+            ? "Server error occurred. The development team has been notified."
+            : "Failed to load complete orders. Please try again.";
+          setOrdersError(errorMessage);
           setCompleteOrders([]);
-          setOrdersError("Received invalid data format from server");
+        } finally {
+          setLoadingOrders(false);
         }
-        
-        setOrdersError(null);
-      } catch (error) {
-        console.error("Failed to fetch complete orders:", error);
-        // Add more detailed error info
-        const errorMessage = error.response?.status === 500 
-          ? "Server error occurred. The development team has been notified."
-          : "Failed to load complete orders. Please try again.";
-        setOrdersError(errorMessage);
-        // Could also set empty array to prevent null reference errors
-        setCompleteOrders([]);
-      } finally {
-        setLoadingOrders(false);
       }
-    }
-  };
+    };
 
-  fetchCompleteOrders();
-}, [activeTab]);
+    fetchCompleteOrders();
+  }, [activeTab]);
 
+  // Fetch cancelled orders
+  useEffect(() => {
+    const fetchCancelledOrders = async () => {
+      if (activeTab === "cancelled") {
+        try {
+          setLoadingOrders(true);
+          const response = await axios.get(
+            "https://yappari-coffee-bar.shop/api/cancelled_ordersAdmin",
+            { withCredentials: true }
+          );
 
-//cancelled orders
-useEffect(() => {
-  const fetchCancelledOrders = async () => {
-    if (activeTab === "cancelled") {
-      try {
-        setLoadingOrders(true);
-        const response = await axios.get(
-          "https://yappari-coffee-bar.shop/api/cancelled_ordersAdmin",
-          { withCredentials: true }
-        );
+          console.log("Cancelled Orders API Response:", response.data);
 
-        console.log("Cancelled Orders API Response:", response.data); // Debugging
+          if (response.data && response.data.success && Array.isArray(response.data.orders)) {
+            setCompleteOrders(response.data.orders);
+            setOrdersError(null);
+          } else if (Array.isArray(response.data)) {
+            // Handle alternative response format
+            setCompleteOrders(response.data);
+            setOrdersError(null);
+          } else {
+            console.error("Unexpected API response:", response.data);
+            setOrdersError("Invalid response format from server");
+            setCompleteOrders([]);
+          }
+        } catch (error) {
+          console.error("Fetch Cancelled Orders Error:", error.response?.data || error.message);
 
-        if (response.data.success && Array.isArray(response.data.orders)) {
-          setCompleteOrders(response.data.orders);
-          setOrdersError(null);
-        } else {
-          console.error("Unexpected API response:", response.data);
-          setOrdersError("Invalid response format from server");
+          const errorMessage =
+            error.response?.status === 500
+              ? "Server error occurred. Please check logs."
+              : "Failed to load cancelled orders.";
+
+          setOrdersError(errorMessage);
           setCompleteOrders([]);
+        } finally {
+          setLoadingOrders(false);
         }
-      } catch (error) {
-        console.error("Fetch Cancelled Orders Error:", error.response?.data || error.message);
-
-        const errorMessage =
-          error.response?.status === 500
-            ? "Server error occurred. Please check logs."
-            : "Failed to load cancelled orders.";
-
-        setOrdersError(errorMessage);
-        setCompleteOrders([]);
-      } finally {
-        setLoadingOrders(false);
       }
-    }
-  };
+    };
 
-  fetchCancelledOrders();
-}, [activeTab]);
+    fetchCancelledOrders();
+  }, [activeTab]);
 
-//fetch dishes
-useEffect(() => {
-  const fetchDishes = async () => {
-    if (activeTab === "dishes") {
-      try {
-        setLoadingDishes(true);
-        const response = await axios.get("https://yappari-coffee-bar.shop/api/dishesAdmin.php", {
-          withCredentials: true,
-        });
+  // Fetch dishes
+  useEffect(() => {
+    const fetchDishes = async () => {
+      if (activeTab === "dishes") {
+        try {
+          setLoadingDishes(true);
+          const response = await axios.get("https://yappari-coffee-bar.shop/api/dishesAdmin.php", {
+            withCredentials: true,
+          });
 
-        console.log("Dishes API Response:", response.data);
+          console.log("Dishes API Response:", response.data);
 
-        if (response.data.success && Array.isArray(response.data.dishes)) {
-          setDishes(response.data.dishes);
-          setDishesError(null);
-        } else {
-          console.error("Unexpected API response:", response.data);
+          if (response.data && response.data.success && Array.isArray(response.data.dishes)) {
+            setDishes(response.data.dishes);
+            setDishesError(null);
+          } else if (Array.isArray(response.data)) {
+            // Handle alternative response format
+            setDishes(response.data);
+            setDishesError(null);
+          } else {
+            console.error("Unexpected API response:", response.data);
+            setDishes([]);
+            setDishesError("Invalid response format from server");
+          }
+        } catch (error) {
+          console.error("Fetch Dishes Error:", error.response?.data || error.message);
+          setDishesError("Failed to load dishes.");
           setDishes([]);
-          setDishesError("Invalid response format from server");
+        } finally {
+          setLoadingDishes(false);
         }
-      } catch (error) {
-        console.error("Fetch Dishes Error:", error.response?.data || error.message);
-        setDishesError("Failed to load dishes.");
-        setDishes([]);
-      } finally {
-        setLoadingDishes(false);
       }
-    }
-  };
+    };
 
-  fetchDishes();
-}, [activeTab]);
+    fetchDishes();
+  }, [activeTab]);
 
-  // handle logout
+  // Handle logout
   const handleLogout = async () => {
     try {
       await axios.post(
@@ -226,25 +274,23 @@ useEffect(() => {
       console.error("Logout failed:", error);
     }
   };
-
+  
+  // Dashboard card
   const renderDashboardCards = () => {
-    // Hard-coded default values to ensure cards always display
-    let totalUsers = userCount; // Use the fetched user count
-
-    // Try to calculate from analyticsData if available
+    let displayTotalSales = 0;
+    let displayTotalOrders = 0;
+    let displayTotalUsers = userCount;
+  
     if (!loading && !error && analyticsData) {
-      // Check if analyticsData is an array
       if (Array.isArray(analyticsData)) {
-        totalSales = analyticsData.reduce((sum, item) => sum + (item.amount || 0), 0);
-        totalOrders = analyticsData.reduce((sum, item) => sum + (item.orders || 0), 0);
-      } 
-      // Check if totalSales/totalOrders/totalUsers are directly in the data
-      else if (typeof analyticsData === 'object') {
-        totalSales = analyticsData.totalSales || 0;
-        totalOrders = analyticsData.totalOrders || 0;
-        // Only override if analytics data has user count
+        displayTotalSales = analyticsData.reduce((sum, item) => sum + (parseFloat(item.amount) || 0), 0);
+        displayTotalOrders = analyticsData.reduce((sum, item) => sum + (parseInt(item.orders) || 0), 0);
+      } else if (typeof analyticsData === 'object') {
+        // Updated to match the structure from PHP
+        displayTotalSales = analyticsData.totalSales || totalSales || 0;
+        displayTotalOrders = analyticsData.totalOrders || totalOrders || 0;
         if (analyticsData.totalUsers) {
-          totalUsers = analyticsData.totalUsers;
+          displayTotalUsers = analyticsData.totalUsers;
         }
       }
     }
@@ -261,7 +307,7 @@ useEffect(() => {
         <div className="bg-white p-6 rounded-lg shadow-sm">
           <h3 className="text-[#2F3A8F] text-xl font-bold mb-4">Total Sales</h3>
           <div className="flex flex-col">
-            <p className="text-2xl font-bold text-gray-800">₱{totalSales.toLocaleString()}</p>
+            <p className="text-2xl font-bold text-gray-800">₱{displayTotalSales.toLocaleString()}</p>
             <p className="text-sm text-gray-500 mt-10">Total revenue</p>
           </div>
         </div>
@@ -270,7 +316,7 @@ useEffect(() => {
         <div className="bg-white p-6 rounded-lg shadow-sm">
           <h3 className="text-[#2F3A8F] text-xl font-bold mb-4">Registered Users</h3>
           <div className="flex flex-col">
-            <p className="text-2xl font-bold text-gray-800">{totalUsers}</p>
+            <p className="text-2xl font-bold text-gray-800">{displayTotalUsers}</p>
             <p className="text-sm text-gray-500 mt-10">Total registered accounts</p>
           </div>
         </div>
@@ -279,7 +325,7 @@ useEffect(() => {
         <div className="bg-white p-6 rounded-lg shadow-sm">
           <h3 className="text-[#2F3A8F] text-xl font-bold mb-4">Total Orders</h3>
           <div className="flex flex-col">
-            <p className="text-2xl font-bold text-gray-800">{totalOrders}</p>
+            <p className="text-2xl font-bold text-gray-800">{displayTotalOrders}</p>
             <p className="text-sm text-gray-500 mt-10">{getTimeRangeText()}</p>
           </div>
         </div>
@@ -290,8 +336,16 @@ useEffect(() => {
   const renderChart = () => {
     if (loading) return <div className="text-center py-20">Loading data...</div>;
     if (error) return <div className="text-center py-20 text-red-600">{error}</div>;
-    if (!analyticsData || analyticsData.length === 0) return <div className="text-center py-20">No data available for this time period</div>;
-
+    
+    // Extract the chart data from the response structure
+    const chartData = analyticsData?.salesData || 
+                     (Array.isArray(analyticsData) ? analyticsData : []);
+    
+    // If chartData is empty or not available
+    if (!chartData || chartData.length === 0) {
+      return <div className="text-center py-20">No data available for this time period</div>;
+    }
+    
     // Calculate chart dimensions
     const chartWidth = 700;
     const chartHeight = 300;
@@ -299,14 +353,14 @@ useEffect(() => {
     const availableWidth = chartWidth - (padding * 2);
     const availableHeight = chartHeight - (padding * 2);
     
-    // Find max value for scaling
-    const maxValue = Math.max(...analyticsData.map(item => item.amount));
+    // Find max value for scaling (with safe fallback)
+    const maxValue = Math.max(...chartData.map(item => parseFloat(item.amount) || 0), 1);
     
     // Generate SVG path for line chart
     const generatePath = () => {
-      return analyticsData.map((item, index) => {
-        const x = padding + (index * (availableWidth / (analyticsData.length - 1 || 1)));
-        const y = chartHeight - padding - ((item.amount / maxValue) * availableHeight);
+      return chartData.map((item, index) => {
+        const x = padding + (index * (availableWidth / (chartData.length - 1 || 1)));
+        const y = chartHeight - padding - (((parseFloat(item.amount) || 0) / maxValue) * availableHeight);
         return `${index === 0 ? 'M' : 'L'} ${x} ${y}`;
       }).join(' ');
     };
@@ -343,9 +397,9 @@ useEffect(() => {
           />
           
           {/* Data points */}
-          {analyticsData.map((item, index) => {
-            const x = padding + (index * (availableWidth / (analyticsData.length - 1 || 1)));
-            const y = chartHeight - padding - ((item.amount / maxValue) * availableHeight);
+          {chartData.map((item, index) => {
+            const x = padding + (index * (availableWidth / (chartData.length - 1 || 1)));
+            const y = chartHeight - padding - (((parseFloat(item.amount) || 0) / maxValue) * availableHeight);
             return (
               <g key={index}>
                 <circle 
@@ -360,7 +414,7 @@ useEffect(() => {
                   textAnchor="middle" 
                   fontSize="10"
                 >
-                  {item.label}
+                  {item.label || `Item ${index + 1}`}
                 </text>
                 <text 
                   x={x} 
@@ -368,7 +422,7 @@ useEffect(() => {
                   textAnchor="middle" 
                   fontSize="10"
                 >
-                  ₱{item.amount.toLocaleString()}
+                  ₱{(parseFloat(item.amount) || 0).toLocaleString()}
                 </text>
               </g>
             );
@@ -408,7 +462,7 @@ useEffect(() => {
                 <p>Loading complete orders...</p>
               ) : ordersError ? (
                 <p className="text-red-500">{ordersError}</p>
-              ) : completeOrders.length === 0 ? (
+              ) : !completeOrders || completeOrders.length === 0 ? (
                 <p>No complete orders found.</p>
               ) : (
                 <div className="overflow-x-auto">
@@ -424,14 +478,14 @@ useEffect(() => {
                     </thead>
                     <tbody className="bg-white divide-y divide-gray-200">
                       {completeOrders.map((order) => (
-                        <tr key={order.id}>
-                          <td className="px-6 py-4 whitespace-nowrap">ORD-{order.order_id.toString().padStart(3, '0')}</td>
-                          <td className="px-6 py-4 whitespace-nowrap">{order.customer_name}</td>
-                          <td className="px-6 py-4 whitespace-nowrap">{new Date(order.date).toLocaleDateString()}</td>
-                          <td className="px-6 py-4 whitespace-nowrap">₱{parseFloat(order.total).toLocaleString()}</td>
+                        <tr key={order.id || order.order_id}>
+                          <td className="px-6 py-4 whitespace-nowrap">ORD-{(order.order_id || "").toString().padStart(3, '0')}</td>
+                          <td className="px-6 py-4 whitespace-nowrap">{order.customer_name || "Unknown"}</td>
+                          <td className="px-6 py-4 whitespace-nowrap">{order.date ? new Date(order.date).toLocaleDateString() : "N/A"}</td>
+                          <td className="px-6 py-4 whitespace-nowrap">₱{(parseFloat(order.total) || 0).toLocaleString()}</td>
                           <td className="px-6 py-4 whitespace-nowrap">
                             <span className="px-2 py-1 bg-green-100 text-green-800 rounded-full">
-                              {order.status}
+                              {order.status || "Completed"}
                             </span>
                           </td>
                         </tr>
@@ -443,43 +497,42 @@ useEffect(() => {
             </div>
           </div>
         );
-        case "cancelled":
-          return (
-            <div className="bg-white p-6 rounded-lg shadow-md">
-              <h3 className="text-xl font-semibold mb-4">Cancelled Orders</h3>
-              {loadingOrders ? (
-                <p>Loading cancelled orders...</p>
-              ) : ordersError ? (
-                <p className="text-red-500">{ordersError}</p>
-              ) : completeOrders.length === 0 ? (
-                <p>No cancelled orders found.</p>
-              ) : (
-                <div className="overflow-x-auto">
-                  <table className="min-w-full divide-y divide-gray-200">
-                    <thead className="bg-gray-50">
-                      <tr>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Order ID</th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Customer</th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Amount</th>
+      case "cancelled":
+        return (
+          <div className="bg-white p-6 rounded-lg shadow-md">
+            <h3 className="text-xl font-semibold mb-4">Cancelled Orders</h3>
+            {loadingOrders ? (
+              <p>Loading cancelled orders...</p>
+            ) : ordersError ? (
+              <p className="text-red-500">{ordersError}</p>
+            ) : !completeOrders || completeOrders.length === 0 ? (
+              <p>No cancelled orders found.</p>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="min-w-full divide-y divide-gray-200">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Order ID</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Customer</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Amount</th>
+                    </tr>
+                  </thead>
+                  <tbody className="bg-white divide-y divide-gray-200">
+                    {completeOrders.map((order) => (
+                      <tr key={order.id || order.order_id}>
+                        <td className="px-6 py-4 whitespace-nowrap">ORD-{(order.order_id || "").toString().padStart(3, '0')}</td>
+                        <td className="px-6 py-4 whitespace-nowrap">{order.customer_name || "Unknown"}</td>
+                        <td className="px-6 py-4 whitespace-nowrap">{order.date ? new Date(order.date).toLocaleDateString() : "N/A"}</td>
+                        <td className="px-6 py-4 whitespace-nowrap">₱{(parseFloat(order.total) || 0).toLocaleString()}</td>
                       </tr>
-                    </thead>
-                    <tbody className="bg-white divide-y divide-gray-200">
-                      {completeOrders.map((order) => (
-                        <tr key={order.id}>
-                          <td className="px-6 py-4 whitespace-nowrap">ORD-{order.order_id.toString().padStart(3, '0')}</td>
-                          <td className="px-6 py-4 whitespace-nowrap">{order.customer_name}</td>
-                          <td className="px-6 py-4 whitespace-nowrap">{new Date(order.date).toLocaleDateString()}</td>
-                          <td className="px-6 py-4 whitespace-nowrap">₱{parseFloat(order.total).toLocaleString()}</td>
-                         
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              )}
-            </div>
-          );
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        );
         
       case "dishes":
         return (
@@ -489,7 +542,7 @@ useEffect(() => {
               <p>Loading dishes data...</p>
             ) : dishesError ? (
               <p className="text-red-500">{dishesError}</p>
-            ) : dishes.length === 0 ? (
+            ) : !dishes || dishes.length === 0 ? (
               <p>No dishes found.</p>
             ) : (
               <div className="overflow-x-auto">
@@ -505,12 +558,12 @@ useEffect(() => {
                   <tbody className="bg-white divide-y divide-gray-200">
                     {dishes.map((dish) => (
                       <tr key={dish.id}>
-                        <td className="px-6 py-4 whitespace-nowrap">{dish.dish_name}</td>
-                        <td className="px-6 py-4 whitespace-nowrap">{dish.category}</td>
-                        <td className="px-6 py-4 whitespace-nowrap">₱{dish.price}</td>
+                        <td className="px-6 py-4 whitespace-nowrap">{dish.dish_name || "Unknown"}</td>
+                        <td className="px-6 py-4 whitespace-nowrap">{dish.category || "Uncategorized"}</td>
+                        <td className="px-6 py-4 whitespace-nowrap">₱{dish.price || "0"}</td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <span className={`px-2 py-1 rounded-md ${dish.status === "Available" ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"}`}>
-                            {dish.status}
+                            {dish.status || "Unknown"}
                           </span>
                         </td>
                       </tr>
@@ -524,6 +577,41 @@ useEffect(() => {
       default:
         return null;
     }
+  };
+
+  // Render top products - Updated to handle the new data structure
+  const renderTopProducts = () => {
+    const topProducts = analyticsData?.topProducts || [];
+    
+    if (!topProducts || topProducts.length === 0) {
+      return null;
+    }
+    
+    return (
+      <div className="mt-8">
+        <h2 className="font-semibold text-lg mb-4">Top Products</h2>
+        <div className="bg-white rounded-lg shadow-md overflow-hidden">
+          <table className="min-w-full divide-y divide-gray-200">
+            <thead className="bg-gray-50">
+              <tr>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Product</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Quantity Sold</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Revenue</th>
+              </tr>
+            </thead>
+            <tbody className="bg-white divide-y divide-gray-200">
+              {topProducts.map((product, index) => (
+                <tr key={index}>
+                  <td className="px-6 py-4 whitespace-nowrap">{product.name || "Unknown Product"}</td>
+                  <td className="px-6 py-4 whitespace-nowrap">{product.quantity || 0}</td>
+                  <td className="px-6 py-4 whitespace-nowrap">₱{(parseFloat(product.revenue) || 0).toLocaleString()}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    );
   };
 
   return (
