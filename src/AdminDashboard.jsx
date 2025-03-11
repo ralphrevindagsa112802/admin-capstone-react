@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, Link, data } from 'react-router-dom';
 import { FaEye } from 'react-icons/fa';
 import { FaEllipsisV } from "react-icons/fa";
 
@@ -22,28 +22,32 @@ const AdminDashboard = () => {
     useEffect(() => {
         const fetchStatuses = async () => {
             const updatedStatuses = {};
+            
             for (const order of filteredOrders) {
                 try {
-                    const response = await fetch(`https://yappari-coffee-bar.shop/api/updateOrderStatus.php?order_id=${order.orders_id}`, {
-                        method: "GET",
-                        headers: { "Content-Type": "application/json" },
-                        credentials: "include",
-                    });
-
+                    const response = await fetch(
+                        `https://yappari-coffee-bar.shop/api/updateOrderStatus.php?order_id=${order.orders_id}`, 
+                        {
+                            method: "GET",
+                            headers: { "Content-Type": "application/json" },
+                            credentials: "include",
+                        }
+                    );
+    
                     const data = await response.json();
-                    if (data.success) {
+                    
+                    if (data.success && data.order_status !== 'Completed' && data.order_status !== 'Cancelled') {
                         updatedStatuses[order.orders_id] = data.order_status;
-                    } else {
-                        updatedStatuses[order.orders_id] = "Error"; // If fetch fails
                     }
+                    // Skip completed orders
                 } catch (error) {
                     console.error("Error fetching status:", error);
-                    updatedStatuses[order.orders_id] = "Error";
                 }
             }
+            
             setOrderStatuses(updatedStatuses);
         };
-
+    
         fetchStatuses();
     }, [filteredOrders]);
 
@@ -596,7 +600,8 @@ const AdminDashboard = () => {
                             </thead>
                             <tbody>
                                 {filteredOrders.length > 0 ? (
-                                    filteredOrders.map((order) => (
+                                    filteredOrders.filter(order => order.order_status !== 'Completed' && order.order_status !== 'Cancelled')
+                                    .map((order) => (
                                         <tr key={order.orders_id} className="border-t border-4 border-[#DCDEEA] hover:bg-gray-100">
                                             <td className="p-3">
                                                 <input
