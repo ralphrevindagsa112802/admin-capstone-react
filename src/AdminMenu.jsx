@@ -19,7 +19,7 @@ const sizeLabels = {
 const AdminMenu = () => {
   const [menuItems, setMenuItems] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [previewImage, setPreviewImage] = useState(null);
+  const [previewImage, setPreviewImage] = useState();
   const [dropdownOpen, setDropdownOpen] = useState(null);
   const [editingFoodId, setEditingFoodId] = useState(null);
   const [isFilterDropdownOpen, setIsFilterDropdownOpen] = useState(false);
@@ -32,7 +32,7 @@ const AdminMenu = () => {
     food_size: "",
     food_price: "",
     category: "",
-    food_img: null,
+    food_img: "",
   });
 
   const categories = [
@@ -339,7 +339,7 @@ const AdminMenu = () => {
         price_large: itemToEdit.price_large || "",
     });
 
-    setPreviewImage(itemToEdit.image_path);
+    setPreviewImage(`https://yappari-coffee-bar.shop${itemToEdit.image_path}`);
     setEditingFoodId(food_id); // ✅ Ensure Food ID is set
     console.log("Set Editing Food ID:", food_id); // ✅ Debugging
     setIsModalOpen(true);
