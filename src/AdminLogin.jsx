@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import Swal from 'sweetalert2';
 
 const AdminLogin = () => {
   const [admin_username, setAdminUsername] = useState('');
@@ -21,7 +22,7 @@ const AdminLogin = () => {
       const data = await response.json();
   
       if (data.success) {
-        alert("Login successful!");
+        Swal.fire('Success', 'Login successful!', 'success');
         
         // ✅ Wait before navigating to let the session persist
         setTimeout(() => navigate("/dashboard"), 500);

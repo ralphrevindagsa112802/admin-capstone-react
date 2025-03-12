@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { FaEye } from 'react-icons/fa';
 import { FaEllipsisV } from "react-icons/fa";
+import Swal from 'sweetalert2';
 
 const AdminDashboard = () => {
     const navigate = useNavigate();
@@ -67,7 +68,7 @@ const AdminDashboard = () => {
             const data = await response.json();
 
             if (data.success) {
-                alert("Order status updated successfully!");
+                Swal.fire('Success', 'Order status updated successfully!', 'success');
                 setOrderStatuses((prevStatuses) => ({
                     ...prevStatuses,
                     [orderId]: status,
@@ -81,11 +82,11 @@ const AdminDashboard = () => {
                     setCompletedOrders(prev => [...prev, orderId]);
                 }
             } else {
-                alert("Error: " + data.message);
+                Swal.fire('Oops...', `Error: ${data.message}`, 'error');
             }
         } catch (error) {
             console.error("Error updating status:", error);
-            alert("Something went wrong!");
+            Swal.fire('Oops...', 'Something went wrong!', 'error');
         }
     };
 
@@ -133,14 +134,14 @@ const AdminDashboard = () => {
     // ✅ Handle Complete button click
     const handleCompleteOrders = async () => {
         if (selectedOrders.length === 0) {
-            alert("Please select at least one order to complete");
+            Swal.fire('Oops...', 'Please select at least one order to complete!', 'warning');
             return;
         }
 
         // Check if any of the selected orders were already completed
         const alreadyCompletedOrders = selectedOrders.filter(id => completedOrders.includes(id));
         if (alreadyCompletedOrders.length > 0) {
-            alert(`Order(s) #${alreadyCompletedOrders.join(', ')} have already been completed and cannot be processed again.`);
+            Swal.fire('Oops...', `Order(s) #${alreadyCompletedOrders.join(', ')} have already been completed and cannot be processed again.`, 'warning');
             // Remove already completed orders from selection
             setSelectedOrders(prev => prev.filter(id => !alreadyCompletedOrders.includes(id)));
             return;
@@ -208,7 +209,7 @@ const AdminDashboard = () => {
             const failed = results.length - successful;
 
             if (failed === 0) {
-                alert(`${successful} order(s) processed and moved to history successfully!`);
+                Swal.fire(`${successful} order(s) processed and moved to history successfully!`, ``, 'success');
 
                 // Clear selection
                 setSelectedOrders([]);
@@ -216,7 +217,7 @@ const AdminDashboard = () => {
                 // Refresh orders list to show current state
                 fetchOrders();
             } else {
-                alert(`${successful} order(s) processed successfully. ${failed} order(s) failed. Check console for details.`);
+                Swal.fire(`${successful} order(s) processed successfully. ${failed} order(s) failed. Check console for details.`, '', 'error');
                 console.error("Failed orders:", results.filter(result => !result.success));
 
                 // Still clear successful orders from selection
@@ -233,7 +234,7 @@ const AdminDashboard = () => {
             }
         } catch (error) {
             console.error("Error completing orders:", error);
-            alert("An error occurred while processing your request.");
+            Swal.fire('Oops...', 'An error occurred while processing your request.', 'error');
         } finally {
             setIsProcessing(false);
         }
@@ -341,7 +342,7 @@ const AdminDashboard = () => {
     const handleCheckboxChange = (orderId) => {
         // Don't allow selection if already completed
         if (completedOrders.includes(orderId)) {
-            alert(`Order #${orderId} has already been completed and cannot be selected.`);
+            Swal.fire(`Order #${orderId} has already been completed and cannot be selected.`, '', 'warning');
             return;
         }
 

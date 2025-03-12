@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import axios from "axios";
 import { FaEllipsisV } from "react-icons/fa";
+import Swal from "sweetalert2";
 
 const sizeLabels = {
   "Rice Meal": { small: "Regular", medium: "Large", large: "Extra Large" },
@@ -87,7 +88,7 @@ const AdminMenu = () => {
         console.log("Update Response:", response.data); // ✅ Debug API response
 
         if (response.data.success) {
-            alert("Availability updated successfully!");
+            Swal.fire('Success', 'Availability updated successfully!', 'success');
             setMenuItems((prevItems) =>
                 prevItems.map((item) =>
                     item.food_id === id
@@ -105,11 +106,11 @@ const AdminMenu = () => {
                 )
             );
         } else {
-            alert("Failed to update availability: " + response.data.message);
+          Swal.fire('Oops...', `Failed to update availability: ${response.data.message}`, 'error');
         }
     } catch (error) {
         console.error("Error updating availability:", error);
-        alert("Error: Could not update availability.");
+        Swal.fire('Oops...', 'Could not update availability.', 'error');
     }
   };
 
@@ -210,7 +211,7 @@ const AdminMenu = () => {
     console.log("Form Data:", formData);
 
     if (!formData.food_name || !formData.category) {
-        alert("Error: Required fields missing!");
+        Swal.fire('Oops...', 'Required fields missing!', 'error');
         return;
     }
 
@@ -256,15 +257,19 @@ const AdminMenu = () => {
         console.log("Server Response:", response.data); // ✅ Debug response
 
         if (response.data.success) {
-            alert(response.data.message || "Product updated successfully!");
+            Swal.fire('Success', `${response.data.message}` || `Product updated successfully!`, 'success');
             handleCloseModal();
             window.location.reload();
         } else {
-            alert(response.data.message || "Failed to update product.");
+            Swal.fire('Oops...', `${response.data.message}` || `Failed to update product.`, 'error');
         }
     } catch (error) {
         console.error(editingFoodId ? "Error updating product:" : "Error adding product:", error);
-        alert(editingFoodId ? "Failed to update product." : "Failed to add product.");
+        Swal.fire({
+          icon: 'error',
+          title: 'Oops...',
+          text: editingFoodId ? "Failed to update product." : "Failed to add product."
+        });
     }
   };
 
@@ -296,17 +301,17 @@ const AdminMenu = () => {
       console.log("Delete API Response:", result); // ✅ Debug API response
   
       if (result.success) {
-        alert("Item deleted successfully!");
+        Swal.fire('Success', 'Item deleted successfully!', 'success');
         const updatedMenuItems = menuItems.filter((item) => item.food_id !== confirmDelete);
         setMenuItems(updatedMenuItems);
         setFilteredItems(updatedMenuItems);
       } else {
-        alert("Failed to delete item: " + result.message);
+        Swal.fire('Oops...', `Failed to delete item: ${result.message}`, 'error');
         console.error("Delete API Error:", result);
       }
     } catch (error) {
       console.error("Error deleting item:", error);
-      alert("Error: Could not delete item. Check console for details.");
+      Swal.fire('Oops...', 'Could not delete item. Check console for details.', 'error');
     }
   
     setConfirmDelete(null);
