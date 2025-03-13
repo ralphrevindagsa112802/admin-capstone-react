@@ -253,8 +253,6 @@ const AdminMenu = () => {
                 {
                     headers: { "Content-Type": "multipart/form-data" },
                     withCredentials: true, // ✅ Ensure session cookies are sent
-                    timeout: 60000, // Increase timeout to 60 seconds
-                    maxContentLength: 10 * 1024 * 1024, // 10MB max content length
                 }
             );
         }
