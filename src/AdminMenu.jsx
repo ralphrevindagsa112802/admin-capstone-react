@@ -333,6 +333,7 @@ const AdminMenu = () => {
     setFormData({
         food_name: itemToEdit.food_name,
         description: itemToEdit.description,
+        allergen: itemToEdit.allergen,
         category: itemToEdit.category,
         price_small: itemToEdit.price_small || "",
         price_medium: itemToEdit.price_medium || "",
@@ -645,6 +646,16 @@ const AdminMenu = () => {
                 <textarea
                   name="description"
                   value={formData.description}
+                  onChange={handleChange}
+                  className="w-full p-2 border rounded-md"
+                ></textarea>
+              </label>
+
+              <label className="flex flex-row items-center w-full">
+                <div className="text-gray-700 w-1/3">Allergen:</div>
+                <textarea
+                  name="allergen"
+                  value={formData.allergen}
                   onChange={handleChange}
                   className="w-full p-2 border rounded-md"
                 ></textarea>
