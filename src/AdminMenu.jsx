@@ -77,7 +77,7 @@ const AdminMenu = () => {
             "https://yappari-coffee-bar.shop/api/updateAvailability",
             {
                 food_id: id,
-                size: size.toLowerCase(),
+                size: size,
                 availability: status // ✅ Ensure correct format
             },
             {
@@ -558,10 +558,10 @@ const AdminMenu = () => {
                                   className="block w-full text-left px-4 py-2 text-black hover:bg-gray-200">
                                   Edit
                                 </button>
-                                <button onClick={() => handleAvailabilityChange(item.food_id, sizeItem.dbKey, "Available")} className="block w-full text-left px-4 py-2 text-green-600 hover:bg-gray-200">
+                                <button onClick={() => handleAvailabilityChange(item.food_id, sizeItem.size, "Available")} className="block w-full text-left px-4 py-2 text-green-600 hover:bg-gray-200">
                                   Available
                                 </button>
-                                <button onClick={() => handleAvailabilityChange(item.food_id, sizeItem.dbKey, "Not Available")} className="block w-full text-left px-4 py-2 text-red-600 hover:bg-gray-200">
+                                <button onClick={() => handleAvailabilityChange(item.food_id, sizeItem.size, "Not Available")} className="block w-full text-left px-4 py-2 text-red-600 hover:bg-gray-200">
                                   Not Available
                                 </button>
                                 <button onClick={() => handleDeleteClick(item.food_id)} className="block w-full text-left px-4 py-2 text-black hover:bg-gray-200">
