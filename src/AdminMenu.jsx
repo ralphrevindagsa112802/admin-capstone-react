@@ -29,6 +29,7 @@ const AdminMenu = () => {
   const [formData, setFormData] = useState({
     food_name: "",
     description: "",
+    allergen: "",
     food_size: "",
     food_price: "",
     category: "",
@@ -181,6 +182,7 @@ const AdminMenu = () => {
         setFormData({
             food_name: "",
             description: "",
+            allergen: "",
             category: "",
             price_small: "",
             price_medium: "",
@@ -219,6 +221,7 @@ const AdminMenu = () => {
     const data = new FormData();
     data.append("food_name", formData.food_name);
     data.append("description", formData.description);
+    data.append("allergen", formData.allergen);
     data.append("category", formData.category);
     data.append("price_small", formData.price_small || "");
     data.append("price_medium", formData.price_medium || "");
@@ -250,6 +253,8 @@ const AdminMenu = () => {
                 {
                     headers: { "Content-Type": "multipart/form-data" },
                     withCredentials: true, // ✅ Ensure session cookies are sent
+                    timeout: 60000, // Increase timeout to 60 seconds
+                    maxContentLength: 10 * 1024 * 1024, // 10MB max content length
                 }
             );
         }
