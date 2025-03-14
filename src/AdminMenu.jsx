@@ -210,6 +210,12 @@ const AdminMenu = () => {
 
     console.log("Submitting Form...");
     console.log("Editing Food ID:", editingFoodId);
+    console.log("Form Data:", formData);
+
+    if (!formData.food_name || !formData.category) {
+        Swal.fire('Oops...', 'Required fields missing!', 'error');
+        return;
+    }
 
     // Create FormData object
     const data = new FormData();
