@@ -210,18 +210,12 @@ const AdminMenu = () => {
 
     console.log("Submitting Form...");
     console.log("Editing Food ID:", editingFoodId);
-    console.log("Form Data:", formData);
-
-    if (!formData.food_name || !formData.category) {
-        Swal.fire('Oops...', 'Required fields missing!', 'error');
-        return;
-    }
 
     // Create FormData object
     const data = new FormData();
     data.append("food_name", formData.food_name);
     data.append("description", formData.description);
-    data.append("allergen", formData.allergen);
+    data.append("allergen", formData.allergen || "");
     data.append("category", formData.category);
     data.append("price_small", formData.price_small || "");
     data.append("price_medium", formData.price_medium || "");
@@ -234,6 +228,12 @@ const AdminMenu = () => {
         data.append("existing_image", formData.image_path);
     }
 
+    // ✅ Debugging - Log FormData content
+    console.log("FormData Entries:");
+    for (let pair of data.entries()) {
+        console.log(pair[0] + ": " + pair[1]);
+    }
+
     try {
         let response;
         if (editingFoodId) {
@@ -243,7 +243,7 @@ const AdminMenu = () => {
                 data,
                 {
                     headers: { "Content-Type": "multipart/form-data" },
-                    withCredentials: true, // ✅ Ensure session cookies are sent
+                    withCredentials: true,
                 }
             );
         } else {
@@ -252,29 +252,30 @@ const AdminMenu = () => {
                 data,
                 {
                     headers: { "Content-Type": "multipart/form-data" },
-                    withCredentials: true, // ✅ Ensure session cookies are sent
+                    withCredentials: true,
                 }
             );
-        }
+        } 
 
         console.log("Server Response:", response.data); // ✅ Debug response
 
         if (response.data.success) {
-            Swal.fire('Success', `${response.data.message}` || `Product updated successfully!`, 'success');
+            Swal.fire('Success', `${response.data.message}`, 'success');
             handleCloseModal();
             window.location.reload();
         } else {
-            Swal.fire('Oops...', `${response.data.message}` || `Failed to update product.`, 'error');
+            Swal.fire('Error', `${response.data.message}`, 'error');
         }
     } catch (error) {
-        console.error(editingFoodId ? "Error updating product:" : "Error adding product:", error);
+        console.error("Error submitting product:", error);
         Swal.fire({
-          icon: 'error',
-          title: 'Oops...',
-          text: editingFoodId ? "Failed to update product." : "Failed to add product."
+            icon: 'error',
+            title: 'Oops...',
+            text: editingFoodId ? "Failed to update product." : "Failed to add product."
         });
     }
   };
+
 
   
 
