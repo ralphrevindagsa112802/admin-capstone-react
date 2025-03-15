@@ -89,7 +89,7 @@ const AdminMenu = () => {
         console.log("Update Response:", response.data); // ✅ Debug API response
 
         if (response.data.success) {
-            Swal.fire('Success', 'Availability updated successfully!', 'success');
+            Swal.fire('Success', 'Availability updated successfully!', 'success', {timer: 2000});
             setMenuItems((prevItems) =>
                 prevItems.map((item) =>
                     item.food_id === id
@@ -107,11 +107,11 @@ const AdminMenu = () => {
                 )
             );
         } else {
-          Swal.fire('Oops...', `Failed to update availability: ${response.data.message}`, 'error');
+          Swal.fire('Oops...', `Failed to update availability: ${response.data.message}`, 'error', {timer: 2000});
         }
     } catch (error) {
         console.error("Error updating availability:", error);
-        Swal.fire('Oops...', 'Could not update availability.', 'error');
+        Swal.fire('Oops...', 'Could not update availability.', 'error', {timer: 2000});
     }
   };
 
@@ -213,7 +213,7 @@ const AdminMenu = () => {
     console.log("Form Data:", formData);
 
     if (!formData.food_name || !formData.category) {
-        Swal.fire('Oops...', 'Required fields missing!', 'error');
+        Swal.fire('Oops...', 'Required fields missing!', 'error', {timer: 2000});
         return;
     }
 
@@ -266,18 +266,19 @@ const AdminMenu = () => {
         console.log("Server Response:", response.data); // ✅ Debug response
 
         if (response.data.success) {
-            Swal.fire('Success', `${response.data.message}`, 'success');
+            Swal.fire('Success', `${response.data.message}`, 'success', {timer: 2000});
             handleCloseModal();
             window.location.reload();
         } else {
-            Swal.fire('Error', `${response.data.message}`, 'error');
+            Swal.fire('Error', `${response.data.message}`, 'error', {timer: 2000});
         }
     } catch (error) {
         console.error("Error submitting product:", error);
         Swal.fire({
             icon: 'error',
             title: 'Oops...',
-            text: editingFoodId ? "Failed to update product." : "Failed to add product."
+            text: editingFoodId ? "Failed to update product." : "Failed to add product.",
+            timer: 2000,
         });
     }
   };
@@ -311,17 +312,17 @@ const AdminMenu = () => {
       console.log("Delete API Response:", result); // ✅ Debug API response
   
       if (result.success) {
-        Swal.fire('Success', 'Item deleted successfully!', 'success');
+        Swal.fire('Success', 'Item deleted successfully!', 'success', {timer: 2000});
         const updatedMenuItems = menuItems.filter((item) => item.food_id !== confirmDelete);
         setMenuItems(updatedMenuItems);
         setFilteredItems(updatedMenuItems);
       } else {
-        Swal.fire('Oops...', `Failed to delete item: ${result.message}`, 'error');
+        Swal.fire('Oops...', `Failed to delete item: ${result.message}`, 'error', {timer: 2000});
         console.error("Delete API Error:", result);
       }
     } catch (error) {
       console.error("Error deleting item:", error);
-      Swal.fire('Oops...', 'Could not delete item. Check console for details.', 'error');
+      Swal.fire('Oops...', 'Could not delete item. Check console for details.', 'error', {timer: 2000});
     }
   
     setConfirmDelete(null);

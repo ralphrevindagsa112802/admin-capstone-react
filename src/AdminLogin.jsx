@@ -22,7 +22,7 @@ const AdminLogin = () => {
       const data = await response.json();
   
       if (data.success) {
-        Swal.fire('Success', 'Login successful!', 'success');
+        Swal.fire('Success', 'Login successful!', 'success', {timer: 2000});
         
         // ✅ Wait before navigating to let the session persist
         setTimeout(() => navigate("/dashboard"), 500);
