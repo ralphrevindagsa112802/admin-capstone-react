@@ -64,7 +64,7 @@ const AdminHistory = () => {
         {},
         { withCredentials: true }
       );
-      navigate("/admin/");
+      navigate("/");
     } catch (error) {
       console.error("Logout failed:", error);
     }

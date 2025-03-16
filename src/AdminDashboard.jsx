@@ -707,7 +707,7 @@ const AdminDashboard = () => {
                                                     <div className="absolute right-0 mt-2 w-48 bg-white border border-gray-300 shadow-md rounded-lg z-50">
                                                         <p className="text-blue-600 text-center font-semibold py-2">Update Status</p>
                                                         <div className="flex flex-col">
-                                                            {["Pending", "Processing", "Out For Delivery", "Ready to pickup", "Order Received", "Completed", "Cancelled"].map((status) => (
+                                                            {["Pending", "Processing", "Out For Delivery", "Ready to pickup"].map((status) => (
                                                                 <button
                                                                     key={status}
                                                                     onClick={() => handleStatusUpdate(order.orders_id, status)}
@@ -754,6 +754,9 @@ const AdminDashboard = () => {
                             </p>
                             <p className="text-sm">
                                 <span className="font-bold text-blue-700">Service option:</span> {selectedOrder.shipping_method}
+                            </p>
+                            <p className="text-sm">
+                                <span className="font-bold text-blue-700">Payment option:</span> {selectedOrder.payment_method}
                             </p>
                         </div>
 
