@@ -18,11 +18,11 @@ const AdminAnalytics = () => {
   const [dishes, setDishes] = useState([]);
   const [loadingDishes, setLoadingDishes] = useState(false);
   const [dishesError, setDishesError] = useState(null);
-  const [isOpen, setIsOpen] = useState(false);
-  const toggleSidebar = () => {
-         setIsOpen(!isOpen);
-     };
- 
+    const [isOpen, setIsOpen] = useState(false);
+ const toggleSidebar = () => {
+        setIsOpen(!isOpen);
+    };
+
 
   // Add this debugging code near the beginning of your component
 useEffect(() => {
@@ -149,100 +149,112 @@ useEffect(() => {
 }, []);
 
   // Fetch complete orders from database
-  useEffect(() => {
-    const fetchCompleteOrders = async () => {
-      if (activeTab === "complete") {
-        try {
-          setLoadingOrders(true);
-          const response = await axios.get(
-            "https://yappari-coffee-bar.shop/api/complete_orders",
-            { withCredentials: true }
-          );
-          
-          console.log("Complete Orders API Response:", response.data);
-          
-          // Handle both response formats
-          let orders = [];
-          if (response.data && response.data.orders) {
-            orders = response.data.orders;
-          } else if (Array.isArray(response.data)) {
-            orders = response.data;
-          } else {
-            console.error("Unexpected response format:", response.data);
-            setOrdersError("Received invalid data format from server");
-            setCompleteOrders([]);
-            setLoadingOrders(false);
-            return;
-          }
-          
-          // Ensure orders is an array
-          if (Array.isArray(orders)) {
-            setCompleteOrders(orders);
-            setOrdersError(null);
-          } else {
-            console.error("Orders is not an array:", orders);
-            setOrdersError("Invalid data format received");
-            setCompleteOrders([]);
-          }
-        } catch (error) {
-          console.error("Failed to fetch complete orders:", error);
-          const errorMessage = error.response?.status === 500 
-            ? "Server error occurred. The development team has been notified."
-            : "Failed to load complete orders. Please try again.";
-          setOrdersError(errorMessage);
+useEffect(() => {
+  const fetchCompleteOrders = async () => {
+    if (activeTab === "complete") {
+      try {
+        setLoadingOrders(true);
+        const response = await axios.get(
+          "https://yappari-coffee-bar.shop/api/complete_orders",
+          { withCredentials: true }
+        );
+        
+        console.log("Complete Orders API Response:", response.data);
+        
+        // Handle both response formats
+        let orders = [];
+        if (response.data && response.data.orders) {
+          orders = response.data.orders;
+        } else if (Array.isArray(response.data)) {
+          orders = response.data;
+        } else {
+          console.error("Unexpected response format:", response.data);
+          setOrdersError("Received invalid data format from server");
           setCompleteOrders([]);
-        } finally {
           setLoadingOrders(false);
+          return;
         }
-      }
-    };
-
-    fetchCompleteOrders();
-  }, [activeTab]);
-
-  // Fetch cancelled orders
-  useEffect(() => {
-    const fetchCancelledOrders = async () => {
-      if (activeTab === "cancelled") {
-        try {
-          setLoadingOrders(true);
-          const response = await axios.get(
-            "https://yappari-coffee-bar.shop/api/cancelled_ordersAdmin",
-            { withCredentials: true }
+        
+        // Ensure orders is an array
+        if (Array.isArray(orders)) {
+          // Filter out duplicates based on order_id
+          const uniqueOrders = Array.from(
+            new Map(orders.map(order => [(order.order_id || order.id), order])).values()
           );
-
-          console.log("Cancelled Orders API Response:", response.data);
-
-          if (response.data && response.data.success && Array.isArray(response.data.orders)) {
-            setCompleteOrders(response.data.orders);
-            setOrdersError(null);
-          } else if (Array.isArray(response.data)) {
-            // Handle alternative response format
-            setCompleteOrders(response.data);
-            setOrdersError(null);
-          } else {
-            console.error("Unexpected API response:", response.data);
-            setOrdersError("Invalid response format from server");
-            setCompleteOrders([]);
-          }
-        } catch (error) {
-          console.error("Fetch Cancelled Orders Error:", error.response?.data || error.message);
-
-          const errorMessage =
-            error.response?.status === 500
-              ? "Server error occurred. Please check logs."
-              : "Failed to load cancelled orders.";
-
-          setOrdersError(errorMessage);
+          setCompleteOrders(uniqueOrders);
+          setOrdersError(null);
+        } else {
+          console.error("Orders is not an array:", orders);
+          setOrdersError("Invalid data format received");
           setCompleteOrders([]);
-        } finally {
-          setLoadingOrders(false);
         }
+      } catch (error) {
+        console.error("Failed to fetch complete orders:", error);
+        const errorMessage = error.response?.status === 500 
+          ? "Server error occurred. The development team has been notified."
+          : "Failed to load complete orders. Please try again.";
+        setOrdersError(errorMessage);
+        setCompleteOrders([]);
+      } finally {
+        setLoadingOrders(false);
       }
-    };
+    }
+  };
 
-    fetchCancelledOrders();
-  }, [activeTab]);
+  fetchCompleteOrders();
+}, [activeTab]);
+
+ // Fetch cancelled orders
+useEffect(() => {
+  const fetchCancelledOrders = async () => {
+    if (activeTab === "cancelled") {
+      try {
+        setLoadingOrders(true);
+        const response = await axios.get(
+          "https://yappari-coffee-bar.shop/api/cancelled_ordersAdmin",
+          { withCredentials: true }
+        );
+
+        console.log("Cancelled Orders API Response:", response.data);
+
+        let orders = [];
+        if (response.data && response.data.success && Array.isArray(response.data.orders)) {
+          orders = response.data.orders;
+        } else if (Array.isArray(response.data)) {
+          // Handle alternative response format
+          orders = response.data;
+        } else {
+          console.error("Unexpected API response:", response.data);
+          setOrdersError("Invalid response format from server");
+          setCompleteOrders([]);
+          setLoadingOrders(false);
+          return;
+        }
+
+        // Filter out duplicates based on order_id
+        const uniqueOrders = Array.from(
+          new Map(orders.map(order => [(order.order_id || order.id), order])).values()
+        );
+        setCompleteOrders(uniqueOrders);
+        setOrdersError(null);
+      } catch (error) {
+        console.error("Fetch Cancelled Orders Error:", error.response?.data || error.message);
+
+        const errorMessage =
+          error.response?.status === 500
+            ? "Server error occurred. Please check logs."
+            : "Failed to load cancelled orders.";
+
+        setOrdersError(errorMessage);
+        setCompleteOrders([]);
+      } finally {
+        setLoadingOrders(false);
+      }
+    }
+  };
+
+  fetchCancelledOrders();
+}, [activeTab]);
 
   // Fetch dishes
   useEffect(() => {
