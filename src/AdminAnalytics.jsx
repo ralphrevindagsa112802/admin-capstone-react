@@ -19,6 +19,15 @@ const AdminAnalytics = () => {
   const [loadingDishes, setLoadingDishes] = useState(false);
   const [dishesError, setDishesError] = useState(null);
 
+
+  // Add this debugging code near the beginning of your component
+useEffect(() => {
+  console.log("Current state values:");
+  console.log("totalOrders:", totalOrders);
+  console.log("analyticsData:", analyticsData);
+}, [totalOrders, analyticsData]);
+
+
   // Fetch analytics data based on selected time range
   useEffect(() => {
     const fetchAnalyticsData = async () => {
@@ -104,29 +113,36 @@ const AdminAnalytics = () => {
   }, []);
 
   // Fetch total orders from database
-  useEffect(() => {
-    const fetchTotalOrders = async () => {
-      try {
-        const response = await axios.get(
-          "https://yappari-coffee-bar.shop/api/orders_count",
-          { withCredentials: true }
-        );
-        console.log("Total Orders API Response:", response.data);
-        
-        if (response.data && response.data.count !== undefined) {
-          setTotalOrders(response.data.count);
-        } else {
-          console.error("Invalid orders count data:", response.data);
-          setTotalOrders(0); // Default to 0 if data is invalid
-        }
-      } catch (error) {
-        console.error("Failed to fetch total orders:", error);
-        setTotalOrders(0); // Default to 0 on error
+  // Fetch total orders from database - completely separate from analytics data
+useEffect(() => {
+  const fetchTotalOrders = async () => {
+    try {
+      // Make sure this API endpoint returns ALL orders regardless of status
+      const response = await axios.get(
+        "https://yappari-coffee-bar.shop/api/orders_count",
+        { withCredentials: true }
+      );
+      console.log("Total Orders API Response:", response.data);
+      
+      // Handle different possible response formats
+      if (response.data && typeof response.data.count === 'number') {
+        setTotalOrders(response.data.count);
+      } else if (response.data && response.data.success && typeof response.data.count === 'number') {
+        setTotalOrders(response.data.count);
+      } else if (typeof response.data === 'number') {
+        setTotalOrders(response.data);
+      } else {
+        console.error("Invalid orders count data format:", response.data);
+        setTotalOrders(0);
       }
-    };
+    } catch (error) {
+      console.error("Failed to fetch total orders:", error);
+      setTotalOrders(0);
+    }
+  };
 
-    fetchTotalOrders();
-  }, []);
+  fetchTotalOrders();
+}, []);
 
   // Fetch complete orders from database
   useEffect(() => {
@@ -277,30 +293,32 @@ const AdminAnalytics = () => {
   
   // Dashboard card
   const renderDashboardCards = () => {
-    let displayTotalSales = 0;
-    let displayTotalOrders = 0;
-    let displayTotalUsers = userCount;
+    let displayTotalSales = totalSales || 0; // Default to state value
+    let displayTotalOrders = totalOrders || 0; // Default to state value from API
+    let displayTotalUsers = userCount || 0;
   
+    // Only update sales and users from analyticsData if available
     if (!loading && !error && analyticsData) {
       if (Array.isArray(analyticsData)) {
         displayTotalSales = analyticsData.reduce((sum, item) => sum + (parseFloat(item.amount) || 0), 0);
-        displayTotalOrders = analyticsData.reduce((sum, item) => sum + (parseInt(item.orders) || 0), 0);
+        // DO NOT update displayTotalOrders here
       } else if (typeof analyticsData === 'object') {
-        // Updated to match the structure from PHP
-        displayTotalSales = analyticsData.totalSales || totalSales || 0;
-        displayTotalOrders = analyticsData.totalOrders || totalOrders || 0;
-        if (analyticsData.totalUsers) {
+        if (analyticsData.totalSales !== undefined) {
+          displayTotalSales = analyticsData.totalSales;
+        }
+        if (analyticsData.totalUsers !== undefined) {
           displayTotalUsers = analyticsData.totalUsers;
         }
+        // DO NOT update displayTotalOrders from analyticsData
       }
     }
-
+  
     const getTimeRangeText = () => {
       if (timeRange === "daily") return "Last 7 days";
       if (timeRange === "monthly") return "Last 12 months";
       return "Last year";
     };
-
+  
     return (
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6 bg-[#E8E9F1] p-4 rounded-lg">
         {/* Total Sales Card */}
@@ -326,7 +344,7 @@ const AdminAnalytics = () => {
           <h3 className="text-[#2F3A8F] text-xl font-bold mb-4">Total Orders</h3>
           <div className="flex flex-col">
             <p className="text-2xl font-bold text-gray-800">{displayTotalOrders}</p>
-            <p className="text-sm text-gray-500 mt-10">{getTimeRangeText()}</p>
+            <p className="text-sm text-gray-500 mt-10">All orders</p>
           </div>
         </div>
       </div>
