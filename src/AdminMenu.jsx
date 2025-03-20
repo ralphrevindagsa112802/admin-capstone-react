@@ -369,8 +369,8 @@ const AdminMenu = () => {
   return (
     <div className="flex flex-col h-screen">
       {/* Navbar */}
-      <div className="w-full flex items-center justify-between py-2 px-4 md:px-8 lg:px-12 shadow-md bg-white z-30 relative">
-        {/* Mobile Toggle Button - Only visible on small screens */}
+      <div className="fixed top-0 left-0 right-0 flex items-center justify-between py-2 px-4 md:px-8 lg:px-12 shadow-md bg-white z-40">
+      {/* Mobile Toggle Button - Only visible on small screens */}
         <button
           onClick={toggleSidebar}
           className="lg:hidden flex items-center justify-center text-[#1C359A] p-2 rounded-full hover:bg-gray-100"
@@ -419,11 +419,11 @@ const AdminMenu = () => {
         <div className={`
                 ${isOpen ? 'translate-x-0' : '-translate-x-full'} 
                 lg:translate-x-0
-                fixed lg:static inset-y-0 left-0 z-40
+                fixed inset-y-0 left-0 z-40
                 w-64 md:w-72 lg:w-64 flex-none bg-white shadow-lg 
-                h-screen lg:h-[calc(100vh-80px)] flex flex-col justify-between p-5
+                h-screen flex flex-col justify-between p-5
                 transition-transform duration-300 ease-in-out
-                top-0 lg:top-20
+                top-0 lg:top-20 lg:h-[calc(100vh-80px)]
             `}>
           {/* Close button - Only visible on small screens when open */}
           <button
@@ -507,357 +507,486 @@ const AdminMenu = () => {
                 handleLogout(e);
               }}
             >
-              <button
-                className="w-full font-medium flex items-center justify-center space-x-2 bg-[#1C359A] hover:bg-blue-800 text-white px-4 py-3 rounded-lg transition-colors duration-200"
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                  <path fillRule="evenodd" d="M3 3a1 1 0 00-1 1v12a1 1 0 001 1h12a1 1 0 001-1V4a1 1 0 00-1-1H3zm11 4a1 1 0 10-2 0v4.586l-1.293-1.293a1 1 0 10-1.414 1.414l3 3a1 1 0 001.414 0l3-3a1 1 0 00-1.414-1.414L14 11.586V7z" clipRule="evenodd" />
-                </svg>
-                <span>SIGN OUT</span>
-              </button>
+         <button
+                                className="w-full font-medium flex items-center justify-center space-x-2 bg-[#1C359A] hover:bg-blue-800 text-white px-4 py-3 rounded-lg transition-colors duration-200"
+                            >
+                                <svg
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    width="20"
+                                    height="20"
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    strokeWidth="2"
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                >
+                                    <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                                    <polyline points="16 17 21 12 16 7"></polyline>
+                                    <line x1="21" y1="12" x2="9" y2="12"></line>
+                                </svg>
+                                <span>SIGN OUT</span>
+                            </button>
             </Link>
           </div>
         </div>
 
         {/* Main Content (Menu Management) */}
-        <div className="flex-1 w-full p-6 overflow-auto bg-[#DCDEEA]">
-          {/* Header Section */}
-          <div className="w-full flex justify-between">
-            <div className="text-[#1C359A] text-lg font-bold">
-              Menu Management {selectedCategory !== "All" && `- ${selectedCategory}`}
+        {/* Main Content (Menu Management) */}
+        <div className="flex-1 w-full p-2 sm:p-4 md:p-6 overflow-auto bg-[#DCDEEA] mt-22 lg:ml-64">  {/* Header Section */}
+  {/* Header Section */}
+  <div className="w-full flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-4">
+    <div className="text-[#1C359A] text-lg font-bold">
+      Menu Management {selectedCategory !== "All" && `- ${selectedCategory}`}
+    </div>
+    <div className="flex flex-wrap gap-2">
+      <button
+        onClick={handleOpenModal}
+        className="px-3 py-2 text-sm md:px-4 md:py-2 md:text-base border-2 border-[#1C359A] text-black font-bold rounded-md hover:bg-white"
+      >
+        Add Product
+      </button>
+      <div className="relative">
+        <button 
+          onClick={toggleFilterDropdown}
+          className="px-3 py-2 text-sm md:px-4 md:py-2 md:text-base border-2 border-[#1C359A] text-black font-bold rounded-md flex items-center space-x-2 hover:bg-white filter-button"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            fill="none"
+            viewBox="0 0 24 24"
+            strokeWidth="1.5"
+            stroke="currentColor"
+            className="w-4 h-4 md:w-5 md:h-5"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              d="M10.5 6h3m-4.5 6h6m-7.5 6h9"
+            />
+          </svg>
+          <span>Filter</span>
+        </button>
+        
+        {/* Filter Dropdown */}
+        {isFilterDropdownOpen && (
+          <div className="absolute right-0 mt-1 w-48 bg-white rounded-md shadow-lg z-50 filter-dropdown">
+            <div className="py-1">
+              {categories.map((category) => (
+                <button
+                  key={category}
+                  onClick={() => handleCategorySelect(category)}
+                  className={`block w-full text-left px-4 py-2 text-sm ${
+                    selectedCategory === category 
+                      ? 'bg-blue-100 text-[#1C359A] font-bold' 
+                      : 'text-gray-700 hover:bg-gray-100'
+                  }`}
+                >
+                  {category}
+                </button>
+              ))}
             </div>
-            <div className="flex gap-2">
-              <button
-                onClick={handleOpenModal}
-                className="px-4 py-2 border-2 border-[#1C359A] text-black font-bold rounded-md hover:bg-white"
+          </div>
+        )}
+      </div>
+    </div>
+  </div>
+  
+  {/* Menu Table - Desktop/Tablet View */}
+  <div className="hidden md:block w-full mt-4 sm:mt-6 rounded-2xl overflow-hidden">
+    <table className="w-full bg-white opacity-90 rounded-2xl">
+      <thead>
+        <tr className="border-t border-4 border-[#DCDEEA]">
+         
+          <th className="px-4 py-2 text-left text-sm text-[#808080]">
+            Name
+          </th>
+          <th className="px-4 py-2 text-left text-sm text-[#808080]">
+            Category
+          </th>
+          <th className="px-4 py-2 text-left text-sm text-[#808080]">
+            Price
+          </th>
+          <th className="px-4 py-2 text-left text-sm text-[#808080]">
+            Size
+          </th>
+          <th className="px-4 py-2 text-left text-sm text-[#808080]">
+            Availability
+          </th>
+          <th className="px-4 py-2 text-left text-sm text-[#808080]">
+            Description
+          </th>
+          <th className="px-4 py-2 text-left text-sm text-[#808080]">
+            Action
+          </th>
+        </tr>
+      </thead>
+      <tbody>
+        {filteredItems && filteredItems.length > 0 ? (
+          filteredItems.flatMap((item) => {                      
+            // Get category-specific labels or fallback to default
+            const labels = sizeLabels[item.category] || { small: "Small", medium: "Medium", large: "Large" };
+            
+            const sizes = [
+              { size: labels.small, dbKey: "small", price: item.price_small },
+              { size: labels.medium, dbKey: "medium", price: item.price_medium },
+              { size: labels.large, dbKey: "large", price: item.price_large }
+            ].filter(s => s.price !== null); // Remove sizes with no price
+            
+            return sizes.map((sizeItem, index) => (
+              <tr
+                key={`${item.food_id}-${sizeItem.size}`} // Unique key using food_id and size
+                className="border-t border-4 border-[#DCDEEA] hover:bg-gray-100"
               >
-                Add Product
-              </button>
+                
+                <td className="px-4 py-2">{item.food_name}</td>
+                <td className="px-4 py-2">{item.category}</td>
+                <td className="px-4 py-2">₱{sizeItem.price}</td>
+                <td className="px-4 py-2">{sizeItem.size}</td>
+                <td className="px-4 py-2 font-black text-[#1C359A]">
+                  <span
+                    className={`font-bold ${
+                      item[`availability_${sizeItem.dbKey}`] === "Available"
+                      ? "text-green-600"
+                      : item[`availability_${sizeItem.dbKey}`] === "Not Available"
+                      ? "text-red-600"
+                      : "text-green-600" // Default styling for undefined cases
+                    }`}
+                  >
+                  
+                  {item[`availability_${sizeItem.dbKey}`] || "Not Available"}
+                  </span>
+                </td>
+                <td className="px-4 py-2">{item.description}</td>
+                <td className="px-4 py-2 relative">
+                  <button 
+                    onClick={(e) => { e.stopPropagation(); toggleDropdown(item.food_id, sizeItem.size); }} 
+                    className="p-2 action-button">
+                    <FaEllipsisV />
+                  </button>
+                  {dropdownOpen === `${item.food_id}-${sizeItem.size}` && (
+                    <div className="absolute right-0 bg-white rounded drop-shadow-lg w-36 z-50 dropdown-menu">
+                      <button 
+                        onClick={() => handleEditItem(item.food_id)} 
+                        className="block w-full text-left px-4 py-2 text-black hover:bg-gray-200">
+                        Edit
+                      </button>
+                      <button onClick={() => handleAvailabilityChange(item.food_id, sizeItem.size, "Available")} className="block w-full text-left px-4 py-2 text-green-600 hover:bg-gray-200">
+                        Available
+                      </button>
+                      <button onClick={() => handleAvailabilityChange(item.food_id, sizeItem.size, "Not Available")} className="block w-full text-left px-4 py-2 text-red-600 hover:bg-gray-200">
+                        Not Available
+                      </button>
+                      <button onClick={() => handleDeleteClick(item.food_id)} className="block w-full text-left px-4 py-2 text-black hover:bg-gray-200">
+                        Delete
+                      </button>
+                    </div>
+                  )}
+                </td>
+              </tr>
+            ));
+          })
+        ) : (
+          <tr>
+            <td colSpan="8" className="border px-4 py-2 text-center text-gray-500">
+              {selectedCategory !== "All" 
+                ? `No menu items found in the ${selectedCategory} category` 
+                : "No menu items available"}
+            </td>
+          </tr>
+        )}
+      </tbody>
+    </table>
+  </div>
 
+  {/* Menu Cards - Mobile View */}
+  <div className="md:hidden w-full mt-4">
+    {filteredItems && filteredItems.length > 0 ? (
+      filteredItems.flatMap((item) => {
+        const labels = sizeLabels[item.category] || { small: "Small", medium: "Medium", large: "Large" };
+        
+        const sizes = [
+          { size: labels.small, dbKey: "small", price: item.price_small },
+          { size: labels.medium, dbKey: "medium", price: item.price_medium },
+          { size: labels.large, dbKey: "large", price: item.price_large }
+        ].filter(s => s.price !== null);
+        
+        return sizes.map((sizeItem, index) => (
+          <div 
+            key={`mobile-${item.food_id}-${sizeItem.size}`}
+            className="bg-white rounded-lg shadow-sm mb-4 p-4 border-l-4 border-[#1C359A]"
+          >
+            <div className="flex justify-between items-start">
+              <div className="flex-1">
+                <div className="flex items-center gap-2">
+                <span className="text-gray-500 mr-1 text-sm">Food: </span> 
+                <h3 className="font-semibold">{item.food_name}</h3>
+                </div>
+                <div className="flex flex-wrap gap-x-4 mt-2">
+                  <div className="flex items-center text-xs bg-gray-100 px-2 py-1 rounded">
+                    <span className="text-gray-500 mr-1">Category:</span> 
+                    <span>{item.category}</span>
+                  </div>
+                  <div className="flex items-center text-xs bg-gray-100 px-2 py-1 rounded">
+                    <span className="text-gray-500 mr-1">Size:</span> 
+                    <span>{sizeItem.size}</span>
+                  </div>
+                </div>
+              </div>
               <div className="relative">
                 <button 
-                  onClick={toggleFilterDropdown}
-                  className="px-4 py-2 border-2 border-[#1C359A] text-black font-bold rounded-md flex items-center space-x-2 hover:bg-white filter-button"
-                >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    strokeWidth="1.5"
-                    stroke="currentColor"
-                    className="w-5 h-5"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      d="M10.5 6h3m-4.5 6h6m-7.5 6h9"
-                    />
-                  </svg>
-                  <span>Filter</span>
+                  onClick={(e) => { e.stopPropagation(); toggleDropdown(item.food_id, sizeItem.size); }} 
+                  className="p-2 action-button">
+                  <FaEllipsisV />
                 </button>
-                
-                {/* Filter Dropdown */}
-                {isFilterDropdownOpen && (
-                  <div className="absolute right-0 mt-1 w-48 bg-white rounded-md shadow-lg z-50 filter-dropdown">
-                    <div className="py-1">
-                      {categories.map((category) => (
-                        <button
-                          key={category}
-                          onClick={() => handleCategorySelect(category)}
-                          className={`block w-full text-left px-4 py-2 text-sm ${
-                            selectedCategory === category 
-                              ? 'bg-blue-100 text-[#1C359A] font-bold' 
-                              : 'text-gray-700 hover:bg-gray-100'
-                          }`}
-                        >
-                          {category}
-                        </button>
-                      ))}
-                    </div>
+                {dropdownOpen === `${item.food_id}-${sizeItem.size}` && (
+                  <div className="absolute right-0 bg-white rounded drop-shadow-lg w-36 z-50 dropdown-menu">
+                    <button 
+                      onClick={() => handleEditItem(item.food_id)} 
+                      className="block w-full text-left px-4 py-2 text-black hover:bg-gray-200 text-sm">
+                      Edit
+                    </button>
+                    <button 
+                      onClick={() => handleAvailabilityChange(item.food_id, sizeItem.size, "Available")} 
+                      className="block w-full text-left px-4 py-2 text-green-600 hover:bg-gray-200 text-sm">
+                      Available
+                    </button>
+                    <button 
+                      onClick={() => handleAvailabilityChange(item.food_id, sizeItem.size, "Not Available")} 
+                      className="block w-full text-left px-4 py-2 text-red-600 hover:bg-gray-200 text-sm">
+                      Not Available
+                    </button>
+                    <button 
+                      onClick={() => handleDeleteClick(item.food_id)} 
+                      className="block w-full text-left px-4 py-2 text-black hover:bg-gray-200 text-sm">
+                      Delete
+                    </button>
                   </div>
                 )}
               </div>
             </div>
+            
+            <div className="flex justify-between mt-3">
+              <div className="text-sm font-semibold">₱{sizeItem.price}</div>
+              <div className={`text-sm font-bold ${
+                item[`availability_${sizeItem.dbKey}`] === "Available"
+                ? "text-green-600"
+                : item[`availability_${sizeItem.dbKey}`] === "Not Available"
+                ? "text-red-600"
+                : "text-green-600"
+              }`}>
+                {item[`availability_${sizeItem.dbKey}`] || "Not Available"}
+              </div>
+            </div>
+            
+            {item.description && (
+              <div className="mt-3 pt-3 border-t border-gray-200">
+                <p className="text-xs text-gray-500">Description:</p>
+                <p className="text-xs mt-1">{item.description}</p>
+              </div>
+            )}
           </div>
-
-          {/* Menu Table */}
-          <div className="p-2 w-full mt-6 rounded-2xl">
-            <table className="w-full bg-white opacity-90 rounded-2xl">
-              <thead>
-                <tr className="border-t border-4 border-[#DCDEEA]">
-                  <th className="p-3 text-left text-[#808080]">
-                    <input type="checkbox" />
-                  </th>
-                  <th className=" px-4 py-2 text-left text-sm text-[#808080]">
-                    Name
-                  </th>
-                  <th className=" px-4 py-2 text-left text-sm text-[#808080]">
-                    Category
-                  </th>
-                  <th className=" px-4 py-2 text-left text-sm text-[#808080]">
-                    Price
-                  </th>
-                  <th className=" px-4 py-2 text-left text-sm text-[#808080]">
-                    Size
-                  </th>
-                  <th className=" px-4 py-2 text-left text-sm text-[#808080]">
-                    Availability
-                  </th>
-                  <th className=" px-4 py-2 text-left text-sm text-[#808080]">
-                    Description
-                  </th>
-                  <th className=" px-4 py-2 text-left text-sm text-[#808080]">
-                    Action
-                  </th>
-                </tr>
-              </thead>
-                <tbody>
-                  {filteredItems && filteredItems.length > 0 ? (
-                    filteredItems.flatMap((item) => {                      
-                      // Get category-specific labels or fallback to default
-                      const labels = sizeLabels[item.category] || { small: "Small", medium: "Medium", large: "Large" };
-                      
-                      const sizes = [
-                        { size: labels.small, dbKey: "small", price: item.price_small },
-                        { size: labels.medium, dbKey: "medium", price: item.price_medium },
-                        { size: labels.large, dbKey: "large", price: item.price_large }
-                      ].filter(s => s.price !== null); // ✅ Remove sizes with no price
-                      
-                      return sizes.map((sizeItem, index) => (
-                        <tr
-                          key={`${item.food_id}-${sizeItem.size}`} // Unique key using food_id and size
-                          className="border-t border-4 border-[#DCDEEA] hover:bg-gray-100"
-                        >
-                          <td className="p-3">
-                            <input type="checkbox" />
-                          </td>
-                          <td className="px-4 py-2">{item.food_name}</td>
-                          <td className="px-4 py-2">{item.category}</td>
-                          <td className="px-4 py-2">₱{sizeItem.price}</td>
-                          <td className="px-4 py-2">{sizeItem.size}</td>
-                          <td className="px-4 py-2 font-black text-[#1C359A]">
-                            <span
-                              className={`font-bold ${
-                                item[`availability_${sizeItem.dbKey}`] === "Available"
-                                ? "text-green-600"
-                                : item[`availability_${sizeItem.dbKey}`] === "Not Available"
-                                ? "text-red-600"
-                                : "text-green-600" // Default styling for undefined cases
-                              }`}
-                            >
-                            
-                            {item[`availability_${sizeItem.dbKey}`] || "Not Available"}
-                            </span>
-                          </td>
-
-                          <td className="px-4 py-2">{item.description}</td>
-                          <td className="px-4 py-2 relative">
-                            <button 
-                              onClick={(e) => { e.stopPropagation(); toggleDropdown(item.food_id, sizeItem.size); }} 
-                              className="p-2 action-button">
-                              <FaEllipsisV />
-                            </button>
-
-                            {dropdownOpen === `${item.food_id}-${sizeItem.size}` && (
-                              <div className="absolute right-0 bg-white rounded drop-shadow-lg w-36 z-50 dropdown-menu">
-                                <button 
-                                  onClick={() => handleEditItem(item.food_id)} 
-                                  className="block w-full text-left px-4 py-2 text-black hover:bg-gray-200">
-                                  Edit
-                                </button>
-                                <button onClick={() => handleAvailabilityChange(item.food_id, sizeItem.size, "Available")} className="block w-full text-left px-4 py-2 text-green-600 hover:bg-gray-200">
-                                  Available
-                                </button>
-                                <button onClick={() => handleAvailabilityChange(item.food_id, sizeItem.size, "Not Available")} className="block w-full text-left px-4 py-2 text-red-600 hover:bg-gray-200">
-                                  Not Available
-                                </button>
-                                <button onClick={() => handleDeleteClick(item.food_id)} className="block w-full text-left px-4 py-2 text-black hover:bg-gray-200">
-                                  Delete
-                                </button>
-                              </div>
-                            )}
-                          </td>
-                        </tr>
-                      ));
-                    })
-                  ) : (
-                    <tr>
-                      <td colSpan="8" className="border px-4 py-2 text-center text-gray-500">
-                        {selectedCategory !== "All" 
-                          ? `No menu items found in the ${selectedCategory} category` 
-                          : "No menu items available"}
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
-            </table>
-          </div>
-        </div>
+        ));
+      })
+    ) : (
+      <div className="bg-white rounded-lg p-6 text-center text-gray-500">
+        {selectedCategory !== "All" 
+          ? `No menu items found in the ${selectedCategory} category` 
+          : "No menu items available"}
+      </div>
+    )}
+  </div>
+</div>
       </div>
 
-      {/**popup ADD product and EDIT  */}
-      {isModalOpen && (
-        <div className="fixed inset-0 bg-white-20 bg-opacity-50 flex justify-center items-center">
-          <div className="bg-white p-6 rounded-lg shadow-lg w-[500px] relative">
-            {/* Close Button */}
-            <button onClick={handleCloseModal} className="absolute top-3 right-3 text-gray-600 text-xl">
-              &times;
-            </button>
+     {/**popup ADD product and EDIT  */}
+{isModalOpen && (
+  <div className="fixed inset-0  bg-opacity-50 flex justify-center items-center z-50">
+    <div className="bg-white rounded-lg shadow-lg w-full h-full md:h-auto md:w-[500px] md:max-w-md overflow-y-auto">
+      <div className="p-3 relative">
+        {/* Close Button */}
+        <button 
+          onClick={handleCloseModal} 
+          className="absolute top-2 right-2 text-gray-600 text-xl"
+          aria-label="Close modal"
+        >
+          &times;
+        </button>
 
-            {/* Dynamic Modal Title */}
-            <h2 className="text-xl font-bold text-blue-800 mb-4">
-              {editingFoodId ? "Editing Product" : "New Product"}
-            </h2>
+        {/* Dynamic Modal Title */}
+        <h2 className="text-center text-lg font-bold text-blue-800 mb-2 mt-1">
+          {editingFoodId ? "Editing Product" : "New Product"}
+        </h2>
 
-            {/* Image Upload Section */}
-            <div
-              onClick={() => document.getElementById("fileInput").click()}
-              className="border-2 border-dashed border-gray-300 p-6 flex flex-col items-center cursor-pointer"
+        {/* Image Upload Section */}
+        <div
+          onClick={() => document.getElementById("fileInput").click()}
+          className="border-2 border-dashed border-gray-300 p-2 flex flex-col items-center cursor-pointer rounded-md mb-3 mx-auto"
+        >
+          <input
+            id="fileInput"
+            type="file"
+            className="hidden"
+            onChange={handleImageChange}
+            accept="image/*"
+          />
+          {previewImage ? (
+            <img
+              src={previewImage}
+              className="w-16 h-16 object-cover rounded-md"
+              alt="Preview"
+            />
+          ) : (
+            <div className="text-center text-gray-500 text-xs py-1">
+              <p>or</p>
+              <p className="text-blue-600 underline">Browse image</p>
+            </div>
+          )}
+        </div>
+
+        {/* Form Fields */}
+        <form onSubmit={handleSubmit} className="text-sm">
+          {/* Product Name */}
+          <div className="mb-2">
+            <label className="block text-gray-700 font-medium text-xs mb-1">
+              Product name:
+            </label>
+            <input
+              type="text"
+              name="food_name"
+              value={formData.food_name}
+              onChange={handleChange}
+              className="w-full p-1.5 border rounded-md text-sm"
+              required
+            />
+          </div>
+
+          {/* Description */}
+          <div className="mb-2">
+            <label className="block text-gray-700 font-medium text-xs mb-1">
+              Description:
+            </label>
+            <textarea
+              name="description"
+              value={formData.description}
+              onChange={handleChange}
+              className="w-full p-1.5 border rounded-md text-sm"
+              rows="2"
+            ></textarea>
+          </div>
+
+          {/* Allergen */}
+          <div className="mb-2">
+            <label className="block text-gray-700 font-medium text-xs mb-1">
+              Allergen:
+            </label>
+            <textarea
+              name="allergen"
+              value={formData.allergen}
+              onChange={handleChange}
+              className="w-full p-1.5 border rounded-md text-sm"
+              rows="2"
+            ></textarea>
+          </div>
+
+          {/* Category */}
+          <div className="mb-2">
+            <label className="block text-gray-700 font-medium text-xs mb-1">
+              Category:
+            </label>
+            <select
+              name="category"
+              value={formData.category}
+              onChange={handleChange}
+              className="w-full p-1.5 border rounded-md text-sm"
             >
-              <input
-                id="fileInput"
-                type="file"
-                className="hidden"
-                onChange={handleImageChange}
-                accept="image/*"
-              />
-              {previewImage ? (
-                <img
-                  src={previewImage}
-                  className="w-24 h-24 object-cover mb-2 rounded-md"
-                  alt="Preview"
-                />
-              ) : (
-                <p className="text-bold text-gray-500 cursor-pointer">
-                  Drag or Browse image <br /> or <br />{" "}
-                  <span className="text-blue-600 underline cursor-pointer">
-                    Browse image
-                  </span>
-                </p>
-              )}
-            </div>
-
-            {/* Form Fields */}
-            <form className="mt-4 space-y-3" onSubmit={handleSubmit}>
-              <label className="flex flex-row items-center w-full">
-                <div className="text-gray-700 w-1/3">Product name:</div>
-                <input
-                  type="text"
-                  name="food_name"
-                  value={formData.food_name}
-                  onChange={handleChange}
-                  className="w-full p-2 border rounded-md"
-                  required
-                />
-              </label>
-
-              <label className="flex flex-row items-center w-full">
-                <div className="text-gray-700 w-1/3">Description:</div>
-                <textarea
-                  name="description"
-                  value={formData.description}
-                  onChange={handleChange}
-                  className="w-full p-2 border rounded-md"
-                ></textarea>
-              </label>
-
-              <label className="flex flex-row items-center w-full">
-                <div className="text-gray-700 w-1/3">Allergen:</div>
-                <textarea
-                  name="allergen"
-                  value={formData.allergen}
-                  onChange={handleChange}
-                  className="w-full p-2 border rounded-md"
-                ></textarea>
-              </label>
-
-              <label className="flex flex-row items-center w-full">
-                <div className="text-gray-700 w-1/3">Category:</div>
-                <select
-                  name="category"
-                  value={formData.category}
-                  onChange={handleChange}
-                  className="w-full p-2 border rounded-md"
-                >
-                  <option value="">Select a Category</option> {/* Default Placeholder */}
-                  <option value="Rice Meal">Rice Meal</option>
-                  <option value="Classic Coffee">Classic Coffee</option>
-                  <option value="Frappes">Frappes</option>
-                  <option value="Smoothies">Smoothies</option>
-                  <option value="Refreshers">Refreshers</option>
-                  <option value="Milk Drinks">Milk Drinks</option>
-                  <option value="Dessert">Dessert</option>
-                  <option value="Snacks and Pasta">Snacks and Pasta</option>
-                </select>
-              </label>
-
-
-              {/* Price Fields */}
-              <label className="flex flex-row items-center w-full">
-                <div className="text-gray-700 w-1/3">Small Price (₱):</div>
-                <input
-                  type="number"
-                  name="price_small"
-                  value={formData.price_small}
-                  onChange={handleChange}
-                  className="w-full p-2 border rounded-md"
-                />
-              </label>
-              <label className="flex flex-row items-center w-full">
-                <div className="text-gray-700 w-1/3">Medium Price (₱):</div>
-                <input
-                  type="number"
-                  name="price_medium"
-                  value={formData.price_medium}
-                  onChange={handleChange}
-                  className="w-full p-2 border rounded-md"
-                />
-              </label>
-              <label className="flex flex-row items-center w-full">
-                <div className="text-gray-700 w-1/3">Large Price (₱):</div>
-                <input
-                  type="number"
-                  name="price_large"
-                  value={formData.price_large}
-                  onChange={handleChange}
-                  className="w-full p-2 border rounded-md"
-                />
-              </label>
-
-              {/* Submit Button */}
-              <button
-                type="submit"
-                className="bg-blue-600 text-white p-2 rounded-md w-full hover:bg-blue-700"
-              >
-                {editingFoodId ? "Update Product" : "Add Product"}
-              </button>
-            </form>
+              <option value="">Select a Category</option>
+              <option value="Rice Meal">Rice Meal</option>
+              <option value="Classic Coffee">Classic Coffee</option>
+              <option value="Frappes">Frappes</option>
+              <option value="Smoothies">Smoothies</option>
+              <option value="Refreshers">Refreshers</option>
+              <option value="Milk Drinks">Milk Drinks</option>
+              <option value="Dessert">Dessert</option>
+              <option value="Snacks and Pasta">Snacks and Pasta</option>
+            </select>
           </div>
-        </div>
-      )}
 
-      {/* Delete Confirmation Modal */}
-      {confirmDelete && (
-        <div className="fixed inset-0 flex items-center justify-center bg-opacity-50">
-          <div className="bg-white p-5 rounded shadow-lg">
-            <p>Are you sure you want to delete this item?</p>
-            <div className="flex justify-end mt-3">
-              <button
-                onClick={() => setConfirmDelete(null)}
-                className="px-4 py-2 bg-gray-400 text-white rounded mr-2"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleConfirmDelete}
-                className="px-4 py-2 bg-red-600 text-white rounded"
-              >
-                Delete
-              </button>
-            </div>
+          {/* Price Fields */}
+          <div className="mb-2">
+            <label className="block text-gray-700 font-medium text-xs mb-1">
+              Small Price (₱):
+            </label>
+            <input
+              type="number"
+              name="price_small"
+              value={formData.price_small}
+              onChange={handleChange}
+              className="w-full p-1.5 border rounded-md text-sm"
+            />
           </div>
-        </div>
-      )}
+          
+          <div className="mb-2">
+            <label className="block text-gray-700 font-medium text-xs mb-1">
+              Medium Price (₱):
+            </label>
+            <input
+              type="number"
+              name="price_medium"
+              value={formData.price_medium}
+              onChange={handleChange}
+              className="w-full p-1.5 border rounded-md text-sm"
+            />
+          </div>
+          
+          <div className="mb-2">
+            <label className="block text-gray-700 font-medium text-xs mb-1">
+              Large Price (₱):
+            </label>
+            <input
+              type="number"
+              name="price_large"
+              value={formData.price_large}
+              onChange={handleChange}
+              className="w-full p-1.5 border rounded-md text-sm"
+            />
+          </div>
+
+          {/* Submit Button */}
+          <button
+            type="submit"
+            className="mt-2 bg-blue-600 text-white p-1.5 rounded-md w-full text-sm"
+          >
+            {editingFoodId ? "Update Product" : "Add Product"}
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+)}
+
+{/* Delete Confirmation Modal */}
+{confirmDelete && (
+  <div className="fixed inset-0 flex items-center justify-center  bg-opacity-50 z-50">
+    <div className="bg-white p-3 rounded-lg shadow-lg w-64 md">
+      <p className="text-center mb-3 text-sm">Are you sure you want to delete this item?</p>
+      <div className="flex justify-center gap-2">
+        <button
+          onClick={() => setConfirmDelete(null)}
+          className="px-3 py-1.5 bg-gray-400 text-white rounded text-sm"
+        >
+          Cancel
+        </button>
+        <button
+          onClick={handleConfirmDelete}
+          className="px-3 py-1.5 bg-red-600 text-white rounded text-sm"
+        >
+          Delete
+        </button>
+      </div>
+    </div>
+  </div>
+)}
     </div>
   );
 };

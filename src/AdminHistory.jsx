@@ -110,8 +110,8 @@ const AdminHistory = () => {
   return (
     <div className="flex flex-col h-screen">
      {/* Navbar */}
-     <div className="w-full flex items-center justify-between py-2 px-4 md:px-8 lg:px-12 shadow-md bg-white z-30 relative">
-        {/* Mobile Toggle Button - Only visible on small screens */}
+     <div className="fixed top-0 left-0 right-0 flex items-center justify-between py-2 px-4 md:px-8 lg:px-12 shadow-md bg-white z-40">
+     {/* Mobile Toggle Button - Only visible on small screens */}
         <button
           onClick={toggleSidebar}
           className="lg:hidden flex items-center justify-center text-[#1C359A] p-2 rounded-full hover:bg-gray-100"
@@ -160,11 +160,11 @@ const AdminHistory = () => {
         <div className={`
                 ${isOpen ? 'translate-x-0' : '-translate-x-full'} 
                 lg:translate-x-0
-                fixed lg:static inset-y-0 left-0 z-40
+                fixed inset-y-0 left-0 z-40
                 w-64 md:w-72 lg:w-64 flex-none bg-white shadow-lg 
-                h-screen lg:h-[calc(100vh-80px)] flex flex-col justify-between p-5
+                h-screen flex flex-col justify-between p-5
                 transition-transform duration-300 ease-in-out
-                top-0 lg:top-20
+                top-0 lg:top-20 lg:h-[calc(100vh-80px)]
             `}>
           {/* Close button - Only visible on small screens when open */}
           <button
@@ -248,86 +248,154 @@ const AdminHistory = () => {
                 handleLogout(e);
               }}
             >
-              <button
-                className="w-full font-medium flex items-center justify-center space-x-2 bg-[#1C359A] hover:bg-blue-800 text-white px-4 py-3 rounded-lg transition-colors duration-200"
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                  <path fillRule="evenodd" d="M3 3a1 1 0 00-1 1v12a1 1 0 001 1h12a1 1 0 001-1V4a1 1 0 00-1-1H3zm11 4a1 1 0 10-2 0v4.586l-1.293-1.293a1 1 0 10-1.414 1.414l3 3a1 1 0 001.414 0l3-3a1 1 0 00-1.414-1.414L14 11.586V7z" clipRule="evenodd" />
-                </svg>
-                <span>SIGN OUT</span>
-              </button>
+             <button
+                                className="w-full font-medium flex items-center justify-center space-x-2 bg-[#1C359A] hover:bg-blue-800 text-white px-4 py-3 rounded-lg transition-colors duration-200"
+                            >
+                                <svg
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    width="20"
+                                    height="20"
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    strokeWidth="2"
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                >
+                                    <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                                    <polyline points="16 17 21 12 16 7"></polyline>
+                                    <line x1="21" y1="12" x2="9" y2="12"></line>
+                                </svg>
+                                <span>SIGN OUT</span>
+                            </button>
             </Link>
           </div>
         </div>
 
         {/* Main Content (Order History) */}
-        <div className="flex-1 w-full p-6 overflow-auto bg-[#DCDEEA]">
-          {/* Header Section */}
-          <div className="w-full flex justify-between mb-4">
-            <div className="text-[#1C359A] text-lg font-bold">Order History</div>
-          </div>
+        <div className="flex-1 w-full p-2 sm:p-4 md:p-6 overflow-auto bg-[#DCDEEA] mt-22 lg:ml-64">  {/* Header Section */}
+    {/* Header Section */}
+    <div className="w-full flex justify-between mb-4">
+        <div className="text-[#1C359A] text-lg font-bold">Order History</div>
+    </div>
 
-          {/* Loading State */}
-          {loading && (
-            <div className="w-full text-center py-8">
-              <div className="inline-block animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-[#1C359A]"></div>
-              <p className="mt-2 text-[#1C359A]">Loading order history...</p>
-            </div>
-          )}
-
-          {/* Error State */}
-          {!loading && error && (
-            <div className="w-full text-center py-8 text-red-500">
-              <p>{error}</p>
-            </div>
-          )}
-
-          {/* Table content */}
-          {!loading && !error && (
-            <div className="p-2 w-full mt-6 rounded-2xl">
-              <table className="w-full bg-white opacity-90 rounded-2xl">
-                <thead>
-                  <tr className="border-t border-4 border-[#DCDEEA]">
-                    <th className="p-3 text-left text-[#808080]">#</th>
-                    <th className="px-4 py-2 text-left text-sm text-[#808080]">Order #</th>
-                    <th className="px-4 py-2 text-left text-sm text-[#808080]">Date</th>
-                    <th className="px-4 py-2 text-left text-sm text-[#808080]">Name</th>
-                    <th className="px-4 py-2 text-left text-sm text-[#808080]">Details</th>
-                    <th className="px-4 py-2 text-left text-sm text-[#808080]">Total</th>
-                    <th className="px-4 py-2 text-left text-sm text-[#808080]">Location</th>
-                    <th className="px-4 py-2 text-left text-sm text-[#808080]">Phone</th>
-                    <th className="px-4 py-2 text-left text-sm text-[#808080]">Status</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {orderHistory.length > 0 ? (
-                    orderHistory.map((order, index) => (
-                      <tr key={order.id || index} className="border-t border-4 border-[#DCDEEA] hover:bg-gray-100">
-                        <td className="p-3">{index + 1}</td>
-                        <td className="px-4 py-2 text-sm">{order.order_id}</td>
-                        <td className="px-4 py-2 text-sm">{order.date}</td>
-                        <td className="px-4 py-2 text-sm">{order.customer_name}</td>
-                        <td className="px-4 py-2 text-sm">
-                          <button onClick={() => handleViewDetails(order)} className="text-blue-500 hover:text-blue-700">
-                            <FaEye />
-                          </button>
-                        </td>
-                        <td className="px-4 py-2 text-sm">₱{parseFloat(order.total).toFixed(2)}</td>
-                        <td className="px-4 py-2 text-sm">{order.location}</td>
-                        <td className="px-4 py-2 text-sm">{order.phone}</td>
-                        <td className="px-4 py-2 text-sm font-semibold text-green-600">{order.status}</td>
-                      </tr>
-                    ))
-                  ) : (
-                    <tr>
-                      <td colSpan="9" className="px-4 py-2 text-center">No completed orders found</td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
-          )}
+    {/* Loading State */}
+    {loading && (
+        <div className="w-full text-center py-8">
+            <div className="inline-block animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-[#1C359A]"></div>
+            <p className="mt-2 text-[#1C359A]">Loading order history...</p>
         </div>
+    )}
+
+    {/* Error State */}
+    {!loading && error && (
+        <div className="w-full text-center py-8 text-red-500">
+            <p>{error}</p>
+        </div>
+    )}
+
+    {/* Table content for desktop/tablet */}
+    {!loading && !error && (
+        <div className="w-full mt-4 sm:mt-6 rounded-2xl overflow-hidden">
+            {/* Desktop/Tablet View */}
+            <div className="hidden md:block overflow-x-auto">
+                <table className="w-full bg-white opacity-90 rounded-2xl">
+                    <thead>
+                        <tr className="border-t border-4 border-[#DCDEEA]">
+                            <th className="p-3 text-left text-[#808080]">#</th>
+                            <th className="px-4 py-2 text-left text-sm text-[#808080]">Order #</th>
+                            <th className="px-4 py-2 text-left text-sm text-[#808080]">Date</th>
+                            <th className="px-4 py-2 text-left text-sm text-[#808080]">Name</th>
+                            <th className="px-4 py-2 text-left text-sm text-[#808080]">Details</th>
+                            <th className="px-4 py-2 text-left text-sm text-[#808080]">Total</th>
+                            <th className="px-4 py-2 text-left text-sm text-[#808080]">Location</th>
+                            <th className="px-4 py-2 text-left text-sm text-[#808080]">Phone</th>
+                            <th className="px-4 py-2 text-left text-sm text-[#808080]">Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {orderHistory.length > 0 ? (
+                            orderHistory.map((order, index) => (
+                                <tr key={order.id || index} className="border-t border-4 border-[#DCDEEA] hover:bg-gray-100">
+                                    <td className="p-3">{index + 1}</td>
+                                    <td className="px-4 py-2 text-sm">{order.order_id}</td>
+                                    <td className="px-4 py-2 text-sm">{order.date}</td>
+                                    <td className="px-4 py-2 text-sm">{order.customer_name}</td>
+                                    <td className="px-4 py-2 text-sm">
+                                        <button onClick={() => handleViewDetails(order)} className="text-blue-500 hover:text-blue-700">
+                                            <FaEye />
+                                        </button>
+                                    </td>
+                                    <td className="px-4 py-2 text-sm">₱{parseFloat(order.total).toFixed(2)}</td>
+                                    <td className="px-4 py-2 text-sm">{order.location}</td>
+                                    <td className="px-4 py-2 text-sm">{order.phone}</td>
+                                    <td className="px-4 py-2 text-sm font-semibold text-green-600">{order.status}</td>
+                                </tr>
+                            ))
+                        ) : (
+                            <tr>
+                                <td colSpan="9" className="px-4 py-2 text-center">No completed orders found</td>
+                            </tr>
+                        )}
+                    </tbody>
+                </table>
+            </div>
+
+            {/* Mobile View - Card Layout */}
+            <div className="md:hidden space-y-4">
+                {orderHistory.length > 0 ? (
+                    orderHistory.map((order, index) => (
+                        <div key={order.id || index} className="bg-white rounded-lg shadow-sm p-4 border-l-4 border-[#1C359A]">
+                            <div className="flex justify-between items-start mb-3">
+                                <div>
+                                    <div className="flex items-center">
+                                        <span className="bg-gray-100 text-xs rounded-full h-5 w-5 flex items-center justify-center mr-2">
+                                            {index + 1}
+                                        </span>
+                                        <span className="font-semibold text-sm">Order #{order.order_id}</span>
+                                    </div>
+                                    <p className="text-xs text-gray-500 mt-1">{order.date}</p>
+                                </div>
+                                <div className="flex flex-col items-end">
+                                    <span className="text-sm font-semibold">₱{parseFloat(order.total).toFixed(2)}</span>
+                                    <span className="text-xs font-medium text-green-600 mt-1">{order.status}</span>
+                                </div>
+                            </div>
+                            
+                            <div className="grid grid-cols-2 gap-2 text-xs mb-3">
+                                <div>
+                                    <p className="text-gray-500">Customer:</p>
+                                    <p>{order.customer_name}</p>
+                                </div>
+                                <div>
+                                    <p className="text-gray-500">Phone:</p>
+                                    <p>{order.phone}</p>
+                                </div>
+                            </div>
+                            
+                            <div className="mt-3 pt-3 border-t border-gray-200 flex justify-between items-center">
+                                <div>
+                                    <p className="text-xs text-gray-500">Location:</p>
+                                    <p className="text-xs truncate max-w-xs">{order.location}</p>
+                                </div>
+                                <button 
+                                    onClick={() => handleViewDetails(order)} 
+                                    className="text-xs bg-blue-50 text-blue-600 px-3 py-1 rounded flex items-center"
+                                >
+                                    <FaEye className="mr-1" size={12} /> Details
+                                </button>
+                            </div>
+                        </div>
+                    ))
+                ) : (
+                    <div className="bg-white rounded-lg p-6 text-center text-gray-500">
+                        No completed orders found
+                    </div>
+                )}
+            </div>
+        </div>
+    )}
+</div>
       </div>
 
       {/* Order Details Popup */}

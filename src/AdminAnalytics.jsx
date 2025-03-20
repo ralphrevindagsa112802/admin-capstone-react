@@ -18,18 +18,18 @@ const AdminAnalytics = () => {
   const [dishes, setDishes] = useState([]);
   const [loadingDishes, setLoadingDishes] = useState(false);
   const [dishesError, setDishesError] = useState(null);
-    const [isOpen, setIsOpen] = useState(false);
- const toggleSidebar = () => {
-        setIsOpen(!isOpen);
-    };
+  const [isOpen, setIsOpen] = useState(false);
+  const toggleSidebar = () => {
+    setIsOpen(!isOpen);
+  };
 
 
   // Add this debugging code near the beginning of your component
-useEffect(() => {
-  console.log("Current state values:");
-  console.log("totalOrders:", totalOrders);
-  console.log("analyticsData:", analyticsData);
-}, [totalOrders, analyticsData]);
+  useEffect(() => {
+    console.log("Current state values:");
+    console.log("totalOrders:", totalOrders);
+    console.log("analyticsData:", analyticsData);
+  }, [totalOrders, analyticsData]);
 
 
   // Fetch analytics data based on selected time range
@@ -44,9 +44,9 @@ useEffect(() => {
             withCredentials: true,
           }
         );
-  
+
         console.log("Analytics API Response:", response.data);
-        
+
         // Accept the full response object, which contains salesData, totalSales, etc.
         if (response.data) {
           setAnalyticsData(response.data);
@@ -63,10 +63,10 @@ useEffect(() => {
         setLoading(false);
       }
     };
-  
+
     fetchAnalyticsData();
   }, [timeRange]);
-  
+
   // Fetch total sales from API
   useEffect(() => {
     const fetchTotalSales = async () => {
@@ -76,7 +76,7 @@ useEffect(() => {
           { withCredentials: true }
         );
         console.log("Total Sales API Response:", response.data);
-        
+
         if (response.data && response.data.total_sales !== undefined) {
           setTotalSales(response.data.total_sales);
         } else {
@@ -100,7 +100,7 @@ useEffect(() => {
           "https://yappari-coffee-bar.shop/api/count",
           { withCredentials: true }
         );
-        
+
         if (response.data && response.data.count !== undefined) {
           setUserCount(response.data.count);
         } else {
@@ -118,143 +118,143 @@ useEffect(() => {
 
   // Fetch total orders from database
   // Fetch total orders from database - completely separate from analytics data
-useEffect(() => {
-  const fetchTotalOrders = async () => {
-    try {
-      // Make sure this API endpoint returns ALL orders regardless of status
-      const response = await axios.get(
-        "https://yappari-coffee-bar.shop/api/orders_count",
-        { withCredentials: true }
-      );
-      console.log("Total Orders API Response:", response.data);
-      
-      // Handle different possible response formats
-      if (response.data && typeof response.data.count === 'number') {
-        setTotalOrders(response.data.count);
-      } else if (response.data && response.data.success && typeof response.data.count === 'number') {
-        setTotalOrders(response.data.count);
-      } else if (typeof response.data === 'number') {
-        setTotalOrders(response.data);
-      } else {
-        console.error("Invalid orders count data format:", response.data);
-        setTotalOrders(0);
-      }
-    } catch (error) {
-      console.error("Failed to fetch total orders:", error);
-      setTotalOrders(0);
-    }
-  };
-
-  fetchTotalOrders();
-}, []);
-
-  // Fetch complete orders from database
-useEffect(() => {
-  const fetchCompleteOrders = async () => {
-    if (activeTab === "complete") {
+  useEffect(() => {
+    const fetchTotalOrders = async () => {
       try {
-        setLoadingOrders(true);
+        // Make sure this API endpoint returns ALL orders regardless of status
         const response = await axios.get(
-          "https://yappari-coffee-bar.shop/api/complete_orders",
+          "https://yappari-coffee-bar.shop/api/orders_count",
           { withCredentials: true }
         );
-        
-        console.log("Complete Orders API Response:", response.data);
-        
-        // Handle both response formats
-        let orders = [];
-        if (response.data && response.data.orders) {
-          orders = response.data.orders;
-        } else if (Array.isArray(response.data)) {
-          orders = response.data;
+        console.log("Total Orders API Response:", response.data);
+
+        // Handle different possible response formats
+        if (response.data && typeof response.data.count === 'number') {
+          setTotalOrders(response.data.count);
+        } else if (response.data && response.data.success && typeof response.data.count === 'number') {
+          setTotalOrders(response.data.count);
+        } else if (typeof response.data === 'number') {
+          setTotalOrders(response.data);
         } else {
-          console.error("Unexpected response format:", response.data);
-          setOrdersError("Received invalid data format from server");
-          setCompleteOrders([]);
-          setLoadingOrders(false);
-          return;
+          console.error("Invalid orders count data format:", response.data);
+          setTotalOrders(0);
         }
-        
-        // Ensure orders is an array
-        if (Array.isArray(orders)) {
+      } catch (error) {
+        console.error("Failed to fetch total orders:", error);
+        setTotalOrders(0);
+      }
+    };
+
+    fetchTotalOrders();
+  }, []);
+
+  // Fetch complete orders from database
+  useEffect(() => {
+    const fetchCompleteOrders = async () => {
+      if (activeTab === "complete") {
+        try {
+          setLoadingOrders(true);
+          const response = await axios.get(
+            "https://yappari-coffee-bar.shop/api/complete_orders",
+            { withCredentials: true }
+          );
+
+          console.log("Complete Orders API Response:", response.data);
+
+          // Handle both response formats
+          let orders = [];
+          if (response.data && response.data.orders) {
+            orders = response.data.orders;
+          } else if (Array.isArray(response.data)) {
+            orders = response.data;
+          } else {
+            console.error("Unexpected response format:", response.data);
+            setOrdersError("Received invalid data format from server");
+            setCompleteOrders([]);
+            setLoadingOrders(false);
+            return;
+          }
+
+          // Ensure orders is an array
+          if (Array.isArray(orders)) {
+            // Filter out duplicates based on order_id
+            const uniqueOrders = Array.from(
+              new Map(orders.map(order => [(order.order_id || order.id), order])).values()
+            );
+            setCompleteOrders(uniqueOrders);
+            setOrdersError(null);
+          } else {
+            console.error("Orders is not an array:", orders);
+            setOrdersError("Invalid data format received");
+            setCompleteOrders([]);
+          }
+        } catch (error) {
+          console.error("Failed to fetch complete orders:", error);
+          const errorMessage = error.response?.status === 500
+            ? "Server error occurred. The development team has been notified."
+            : "Failed to load complete orders. Please try again.";
+          setOrdersError(errorMessage);
+          setCompleteOrders([]);
+        } finally {
+          setLoadingOrders(false);
+        }
+      }
+    };
+
+    fetchCompleteOrders();
+  }, [activeTab]);
+
+  // Fetch cancelled orders
+  useEffect(() => {
+    const fetchCancelledOrders = async () => {
+      if (activeTab === "cancelled") {
+        try {
+          setLoadingOrders(true);
+          const response = await axios.get(
+            "https://yappari-coffee-bar.shop/api/cancelled_ordersAdmin",
+            { withCredentials: true }
+          );
+
+          console.log("Cancelled Orders API Response:", response.data);
+
+          let orders = [];
+          if (response.data && response.data.success && Array.isArray(response.data.orders)) {
+            orders = response.data.orders;
+          } else if (Array.isArray(response.data)) {
+            // Handle alternative response format
+            orders = response.data;
+          } else {
+            console.error("Unexpected API response:", response.data);
+            setOrdersError("Invalid response format from server");
+            setCompleteOrders([]);
+            setLoadingOrders(false);
+            return;
+          }
+
           // Filter out duplicates based on order_id
           const uniqueOrders = Array.from(
             new Map(orders.map(order => [(order.order_id || order.id), order])).values()
           );
           setCompleteOrders(uniqueOrders);
           setOrdersError(null);
-        } else {
-          console.error("Orders is not an array:", orders);
-          setOrdersError("Invalid data format received");
+        } catch (error) {
+          console.error("Fetch Cancelled Orders Error:", error.response?.data || error.message);
+
+          const errorMessage =
+            error.response?.status === 500
+              ? "Server error occurred. Please check logs."
+              : "Failed to load cancelled orders.";
+
+          setOrdersError(errorMessage);
           setCompleteOrders([]);
-        }
-      } catch (error) {
-        console.error("Failed to fetch complete orders:", error);
-        const errorMessage = error.response?.status === 500 
-          ? "Server error occurred. The development team has been notified."
-          : "Failed to load complete orders. Please try again.";
-        setOrdersError(errorMessage);
-        setCompleteOrders([]);
-      } finally {
-        setLoadingOrders(false);
-      }
-    }
-  };
-
-  fetchCompleteOrders();
-}, [activeTab]);
-
- // Fetch cancelled orders
-useEffect(() => {
-  const fetchCancelledOrders = async () => {
-    if (activeTab === "cancelled") {
-      try {
-        setLoadingOrders(true);
-        const response = await axios.get(
-          "https://yappari-coffee-bar.shop/api/cancelled_ordersAdmin",
-          { withCredentials: true }
-        );
-
-        console.log("Cancelled Orders API Response:", response.data);
-
-        let orders = [];
-        if (response.data && response.data.success && Array.isArray(response.data.orders)) {
-          orders = response.data.orders;
-        } else if (Array.isArray(response.data)) {
-          // Handle alternative response format
-          orders = response.data;
-        } else {
-          console.error("Unexpected API response:", response.data);
-          setOrdersError("Invalid response format from server");
-          setCompleteOrders([]);
+        } finally {
           setLoadingOrders(false);
-          return;
         }
-
-        // Filter out duplicates based on order_id
-        const uniqueOrders = Array.from(
-          new Map(orders.map(order => [(order.order_id || order.id), order])).values()
-        );
-        setCompleteOrders(uniqueOrders);
-        setOrdersError(null);
-      } catch (error) {
-        console.error("Fetch Cancelled Orders Error:", error.response?.data || error.message);
-
-        const errorMessage =
-          error.response?.status === 500
-            ? "Server error occurred. Please check logs."
-            : "Failed to load cancelled orders.";
-
-        setOrdersError(errorMessage);
-        setCompleteOrders([]);
-      } finally {
-        setLoadingOrders(false);
       }
-    }
-  };
+    };
 
-  fetchCancelledOrders();
-}, [activeTab]);
+    fetchCancelledOrders();
+  }, [activeTab]);
 
   // Fetch dishes
   useEffect(() => {
@@ -306,13 +306,13 @@ useEffect(() => {
       console.error("Logout failed:", error);
     }
   };
-  
+
   // Dashboard card
   const renderDashboardCards = () => {
     let displayTotalSales = totalSales || 0; // Default to state value
     let displayTotalOrders = totalOrders || 0; // Default to state value from API
     let displayTotalUsers = userCount || 0;
-  
+
     // Only update sales and users from analyticsData if available
     if (!loading && !error && analyticsData) {
       if (Array.isArray(analyticsData)) {
@@ -328,13 +328,13 @@ useEffect(() => {
         // DO NOT update displayTotalOrders from analyticsData
       }
     }
-  
+
     const getTimeRangeText = () => {
       if (timeRange === "daily") return "Last 7 days";
       if (timeRange === "monthly") return "Last 12 months";
       return "Last year";
     };
-  
+
     return (
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6 bg-[#E8E9F1] p-4 rounded-lg">
         {/* Total Sales Card */}
@@ -345,7 +345,7 @@ useEffect(() => {
             <p className="text-sm text-gray-500 mt-10">Total revenue</p>
           </div>
         </div>
-        
+
         {/* Users Card */}
         <div className="bg-white p-6 rounded-lg shadow-sm">
           <h3 className="text-[#2F3A8F] text-xl font-bold mb-4">Registered Users</h3>
@@ -354,7 +354,7 @@ useEffect(() => {
             <p className="text-sm text-gray-500 mt-10">Total registered accounts</p>
           </div>
         </div>
-        
+
         {/* Total Orders Card */}
         <div className="bg-white p-6 rounded-lg shadow-sm">
           <h3 className="text-[#2F3A8F] text-xl font-bold mb-4">Total Orders</h3>
@@ -367,130 +367,213 @@ useEffect(() => {
     );
   };
 
+  //chart analytics
   const renderChart = () => {
-    if (loading) return <div className="text-center py-20">Loading data...</div>;
-    if (error) return <div className="text-center py-20 text-red-600">{error}</div>;
-    
+    if (loading) return <div className="text-center py-10 md:py-20">Loading data...</div>;
+    if (error) return <div className="text-center py-10 md:py-20 text-red-600">{error}</div>;
+
     // Extract the chart data from the response structure
-    const chartData = analyticsData?.salesData || 
-                     (Array.isArray(analyticsData) ? analyticsData : []);
-    
+    const chartData = analyticsData?.salesData ||
+      (Array.isArray(analyticsData) ? analyticsData : []);
+
     // If chartData is empty or not available
     if (!chartData || chartData.length === 0) {
-      return <div className="text-center py-20">No data available for this time period</div>;
+      return <div className="text-center py-10 md:py-20">No data available for this time period</div>;
     }
-    
-    // Calculate chart dimensions
-    const chartWidth = 700;
-    const chartHeight = 300;
-    const padding = 40;
-    const availableWidth = chartWidth - (padding * 2);
-    const availableHeight = chartHeight - (padding * 2);
-    
+
+    // Calculate chart dimensions dynamically
+    const getChartDimensions = () => {
+      // Base dimensions for mobile
+      const base = {
+        width: "100%", // Full width of container
+        height: 250,   // Smaller height on mobile
+        padding: 25,   // Smaller padding on mobile
+        labelFontSize: 8, // Smaller font on mobile
+        pointRadius: 3, // Smaller points on mobile
+        strokeWidth: 1.5 // Thinner lines on mobile
+      };
+
+      // Dimensions for tablet and up (sm: 640px+)
+      const sm = {
+        height: 280,
+        padding: 30,
+        labelFontSize: 9,
+        pointRadius: 3.5,
+        strokeWidth: 1.8
+      };
+
+      // Dimensions for medium screens (md: 768px+)
+      const md = {
+        height: 300,
+        padding: 40,
+        labelFontSize: 10,
+        pointRadius: 4,
+        strokeWidth: 2
+      };
+
+      // Return dimensions based on current viewport width
+      // Using window.innerWidth would be ideal here, but for SSR compatibility we'll use media queries in component
+      return {
+        ...base,
+        tablet: sm,
+        desktop: md
+      };
+    };
+
+    const dimensions = getChartDimensions();
+
+    // For responsive SVG, we'll use viewBox instead of fixed width/height
+    // This will let the SVG scale with its container
+    const baseWidth = 700; // Reference width for viewBox
+    const baseHeight = dimensions.height;
+    const basePadding = dimensions.padding;
+
     // Find max value for scaling (with safe fallback)
     const maxValue = Math.max(...chartData.map(item => parseFloat(item.amount) || 0), 1);
-    
-    // Generate SVG path for line chart
+
+    // Generate SVG path for line chart based on viewBox coordinates
     const generatePath = () => {
+      const availableWidth = baseWidth - (basePadding * 2);
+      const availableHeight = baseHeight - (basePadding * 2);
+
       return chartData.map((item, index) => {
-        const x = padding + (index * (availableWidth / (chartData.length - 1 || 1)));
-        const y = chartHeight - padding - (((parseFloat(item.amount) || 0) / maxValue) * availableHeight);
+        const x = basePadding + (index * (availableWidth / (chartData.length - 1 || 1)));
+        const y = baseHeight - basePadding - (((parseFloat(item.amount) || 0) / maxValue) * availableHeight);
         return `${index === 0 ? 'M' : 'L'} ${x} ${y}`;
       }).join(' ');
     };
 
     return (
-      <div className="bg-white p-6 rounded-lg shadow-md">
-        <svg width={chartWidth} height={chartHeight}>
-          {/* Y-axis */}
-          <line 
-            x1={padding} 
-            y1={padding} 
-            x2={padding} 
-            y2={chartHeight - padding} 
-            stroke="#888" 
-            strokeWidth="1"
-          />
-          
-          {/* X-axis */}
-          <line 
-            x1={padding} 
-            y1={chartHeight - padding} 
-            x2={chartWidth - padding} 
-            y2={chartHeight - padding} 
-            stroke="#888" 
-            strokeWidth="1"
-          />
-          
-          {/* Data line */}
-          <path 
-            d={generatePath()}
-            fill="none"
-            stroke="#1C359A"
-            strokeWidth="2"
-          />
-          
-          {/* Data points */}
-          {chartData.map((item, index) => {
-            const x = padding + (index * (availableWidth / (chartData.length - 1 || 1)));
-            const y = chartHeight - padding - (((parseFloat(item.amount) || 0) / maxValue) * availableHeight);
-            return (
-              <g key={index}>
-                <circle 
-                  cx={x} 
-                  cy={y} 
-                  r="4" 
-                  fill="#1C359A"
-                />
-                <text 
-                  x={x} 
-                  y={chartHeight - padding + 20} 
-                  textAnchor="middle" 
-                  fontSize="10"
-                >
-                  {item.label || `Item ${index + 1}`}
-                </text>
-                <text 
-                  x={x} 
-                  y={y - 10} 
-                  textAnchor="middle" 
-                  fontSize="10"
-                >
-                  ₱{(parseFloat(item.amount) || 0).toLocaleString()}
-                </text>
-              </g>
-            );
-          })}
-          
-          {/* Y-axis labels */}
-          <text 
-            x={padding - 5} 
-            y={chartHeight - padding} 
-            textAnchor="end" 
-            fontSize="10"
-          >
-            0
-          </text>
-          <text 
-            x={padding - 5} 
-            y={padding} 
-            textAnchor="end" 
-            fontSize="10"
-          >
-            ₱{maxValue.toLocaleString()}
-          </text>
-        </svg>
+      <div className="bg-white p-3 sm:p-4 md:p-6 rounded-lg shadow-md overflow-x-auto">
+        {/* Responsive container for the chart */}
+        <div className="min-w-full">
+          {/* SVG with viewBox for responsive scaling */}
+          <svg className="w-full" viewBox={`0 0 ${baseWidth} ${baseHeight}`} preserveAspectRatio="xMidYMid meet">
+            {/* Y-axis */}
+            <line
+              x1={basePadding}
+              y1={basePadding}
+              x2={basePadding}
+              y2={baseHeight - basePadding}
+              stroke="#888"
+              strokeWidth="1"
+            />
+
+            {/* X-axis */}
+            <line
+              x1={basePadding}
+              y1={baseHeight - basePadding}
+              x2={baseWidth - basePadding}
+              y2={baseHeight - basePadding}
+              stroke="#888"
+              strokeWidth="1"
+            />
+
+            {/* Data line */}
+            <path
+              d={generatePath()}
+              fill="none"
+              stroke="#1C359A"
+              strokeWidth={dimensions.strokeWidth}
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+
+            {/* Data points and labels */}
+            {chartData.map((item, index) => {
+              const availableWidth = baseWidth - (basePadding * 2);
+              const availableHeight = baseHeight - (basePadding * 2);
+              const x = basePadding + (index * (availableWidth / (chartData.length - 1 || 1)));
+              const y = baseHeight - basePadding - (((parseFloat(item.amount) || 0) / maxValue) * availableHeight);
+
+              return (
+                <g key={index}>
+                  {/* Data point */}
+                  <circle
+                    cx={x}
+                    cy={y}
+                    r={dimensions.pointRadius}
+                    fill="#1C359A"
+                  />
+
+                  {/* X-axis label (conditionally shown based on data density) */}
+                  <text
+                    x={x}
+                    y={baseHeight - basePadding + 15}
+                    textAnchor="middle"
+                    fontSize={dimensions.labelFontSize}
+                    className={chartData.length > 10 ? "hidden sm:inline" : ""}
+                  >
+                    {item.label || `Item ${index + 1}`}
+                  </text>
+
+                  {/* Value label (only shown on hover or for important points) */}
+                  <text
+                    x={x}
+                    y={y - 10}
+                    textAnchor="middle"
+                    fontSize={dimensions.labelFontSize}
+                    className={chartData.length > 6 ? "hidden sm:inline" : ""}
+                  >
+                    ₱{(parseFloat(item.amount) || 0).toLocaleString()}
+                  </text>
+                </g>
+              );
+            })}
+
+            {/* Y-axis labels */}
+            <text
+              x={basePadding - 5}
+              y={baseHeight - basePadding}
+              textAnchor="end"
+              fontSize={dimensions.labelFontSize}
+            >
+              0
+            </text>
+            <text
+              x={basePadding - 5}
+              y={basePadding}
+              textAnchor="end"
+              fontSize={dimensions.labelFontSize}
+            >
+              ₱{maxValue.toLocaleString()}
+            </text>
+
+            {/* Add middle y-axis label */}
+            <text
+              x={basePadding - 5}
+              y={(baseHeight - basePadding + basePadding) / 2}
+              textAnchor="end"
+              fontSize={dimensions.labelFontSize}
+            >
+              ₱{(maxValue / 2).toLocaleString()}
+            </text>
+          </svg>
+        </div>
+
+        {/* Mobile-friendly legend when there are many data points */}
+        {chartData.length > 10 && (
+          <div className="sm:hidden mt-4 flex flex-wrap justify-center gap-2 text-xs">
+            {chartData.map((item, index) => (
+              <div key={index} className="flex items-center">
+                <div className="w-2 h-2 rounded-full bg-blue-600 mr-1"></div>
+                <span>{item.label}: ₱{(parseFloat(item.amount) || 0).toLocaleString()}</span>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     );
   };
 
   // Render tabs content
+  // Render tabs content
   const renderTabContent = () => {
     switch (activeTab) {
       case "complete":
         return (
-          <div className="bg-white p-6 rounded-lg shadow-md">
-            <h3 className="text-xl font-semibold mb-4">Complete Orders</h3>
+          <div className="bg-white p-4 md:p-6 rounded-lg shadow-md">
+            <h3 className="text-lg md:text-xl font-semibold mb-2 md:mb-4">Complete Orders</h3>
             <div className="text-gray-500">
               {loadingOrders ? (
                 <p>Loading complete orders...</p>
@@ -499,42 +582,67 @@ useEffect(() => {
               ) : !completeOrders || completeOrders.length === 0 ? (
                 <p>No complete orders found.</p>
               ) : (
-                <div className="overflow-x-auto">
-                  <table className="min-w-full divide-y divide-gray-200">
-                    <thead className="bg-gray-50">
-                      <tr>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Order ID</th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Customer</th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Amount</th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                      </tr>
-                    </thead>
-                    <tbody className="bg-white divide-y divide-gray-200">
-                      {completeOrders.map((order) => (
-                        <tr key={order.id || order.order_id}>
-                          <td className="px-6 py-4 whitespace-nowrap">ORD-{(order.order_id || "").toString().padStart(3, '0')}</td>
-                          <td className="px-6 py-4 whitespace-nowrap">{order.customer_name || "Unknown"}</td>
-                          <td className="px-6 py-4 whitespace-nowrap">{order.date ? new Date(order.date).toLocaleDateString() : "N/A"}</td>
-                          <td className="px-6 py-4 whitespace-nowrap">₱{(parseFloat(order.total) || 0).toLocaleString()}</td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <span className="px-2 py-1 bg-green-100 text-green-800 rounded-full">
-                              {order.status || "Completed"}
-                            </span>
-                          </td>
+                <>
+                  {/* Desktop and tablet view */}
+                  <div className="hidden sm:block overflow-x-auto">
+                    <table className="min-w-full divide-y divide-gray-200">
+                      <thead className="bg-gray-50">
+                        <tr>
+                          <th className="px-2 py-2 md:px-6 md:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Order ID</th>
+                          <th className="px-2 py-2 md:px-6 md:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Customer</th>
+                          <th className="px-2 py-2 md:px-6 md:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                          <th className="px-2 py-2 md:px-6 md:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Amount</th>
+                          <th className="px-2 py-2 md:px-6 md:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
                         </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
+                      </thead>
+                      <tbody className="bg-white divide-y divide-gray-200">
+                        {completeOrders.map((order) => (
+                          <tr key={order.id || order.order_id}>
+                            <td className="px-2 py-2 md:px-6 md:py-4 whitespace-nowrap text-xs md:text-sm">ORD-{(order.order_id || "").toString().padStart(3, '0')}</td>
+                            <td className="px-2 py-2 md:px-6 md:py-4 whitespace-nowrap text-xs md:text-sm">{order.customer_name || "Unknown"}</td>
+                            <td className="px-2 py-2 md:px-6 md:py-4 whitespace-nowrap text-xs md:text-sm">{order.date ? new Date(order.date).toLocaleDateString() : "N/A"}</td>
+                            <td className="px-2 py-2 md:px-6 md:py-4 whitespace-nowrap text-xs md:text-sm">₱{(parseFloat(order.total) || 0).toLocaleString()}</td>
+                            <td className="px-2 py-2 md:px-6 md:py-4 whitespace-nowrap text-xs md:text-sm">
+                              <span className="px-2 py-1 bg-green-100 text-green-800 rounded-full text-xs">
+                                {order.status || "Completed"}
+                              </span>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+
+                  {/* Mobile view */}
+                  <div className="sm:hidden space-y-3">
+                    {completeOrders.map((order) => (
+                      <div key={order.id || order.order_id} className="bg-gray-50 p-3 rounded-lg">
+                        <div className="flex justify-between items-center mb-2">
+                          <span className="font-medium text-sm">ORD-{(order.order_id || "").toString().padStart(3, '0')}</span>
+                          <span className="px-2 py-1 bg-green-100 text-green-800 rounded-full text-xs">
+                            {order.status || "Completed"}
+                          </span>
+                        </div>
+                        <div className="grid grid-cols-2 gap-1 text-xs">
+                          <div className="text-gray-500">Customer:</div>
+                          <div>{order.customer_name || "Unknown"}</div>
+                          <div className="text-gray-500">Date:</div>
+                          <div>{order.date ? new Date(order.date).toLocaleDateString() : "N/A"}</div>
+                          <div className="text-gray-500">Amount:</div>
+                          <div>₱{(parseFloat(order.total) || 0).toLocaleString()}</div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </>
               )}
             </div>
           </div>
         );
       case "cancelled":
         return (
-          <div className="bg-white p-6 rounded-lg shadow-md">
-            <h3 className="text-xl font-semibold mb-4">Cancelled Orders</h3>
+          <div className="bg-white p-4 md:p-6 rounded-lg shadow-md">
+            <h3 className="text-lg md:text-xl font-semibold mb-2 md:mb-4">Cancelled Orders</h3>
             {loadingOrders ? (
               <p>Loading cancelled orders...</p>
             ) : ordersError ? (
@@ -542,36 +650,56 @@ useEffect(() => {
             ) : !completeOrders || completeOrders.length === 0 ? (
               <p>No cancelled orders found.</p>
             ) : (
-              <div className="overflow-x-auto">
-                <table className="min-w-full divide-y divide-gray-200">
-                  <thead className="bg-gray-50">
-                    <tr>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Order ID</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Customer</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Amount</th>
-                    </tr>
-                  </thead>
-                  <tbody className="bg-white divide-y divide-gray-200">
-                    {completeOrders.map((order) => (
-                      <tr key={order.id || order.order_id}>
-                        <td className="px-6 py-4 whitespace-nowrap">ORD-{(order.order_id || "").toString().padStart(3, '0')}</td>
-                        <td className="px-6 py-4 whitespace-nowrap">{order.customer_name || "Unknown"}</td>
-                        <td className="px-6 py-4 whitespace-nowrap">{order.date ? new Date(order.date).toLocaleDateString() : "N/A"}</td>
-                        <td className="px-6 py-4 whitespace-nowrap">₱{(parseFloat(order.total) || 0).toLocaleString()}</td>
+              <>
+                {/* Desktop and tablet view */}
+                <div className="hidden sm:block overflow-x-auto">
+                  <table className="min-w-full divide-y divide-gray-200">
+                    <thead className="bg-gray-50">
+                      <tr>
+                        <th className="px-2 py-2 md:px-6 md:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Order ID</th>
+                        <th className="px-2 py-2 md:px-6 md:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Customer</th>
+                        <th className="px-2 py-2 md:px-6 md:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                        <th className="px-2 py-2 md:px-6 md:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Amount</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+                    </thead>
+                    <tbody className="bg-white divide-y divide-gray-200">
+                      {completeOrders.map((order) => (
+                        <tr key={order.id || order.order_id}>
+                          <td className="px-2 py-2 md:px-6 md:py-4 whitespace-nowrap text-xs md:text-sm">ORD-{(order.order_id || "").toString().padStart(3, '0')}</td>
+                          <td className="px-2 py-2 md:px-6 md:py-4 whitespace-nowrap text-xs md:text-sm">{order.customer_name || "Unknown"}</td>
+                          <td className="px-2 py-2 md:px-6 md:py-4 whitespace-nowrap text-xs md:text-sm">{order.date ? new Date(order.date).toLocaleDateString() : "N/A"}</td>
+                          <td className="px-2 py-2 md:px-6 md:py-4 whitespace-nowrap text-xs md:text-sm">₱{(parseFloat(order.total) || 0).toLocaleString()}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+
+                {/* Mobile view */}
+                <div className="sm:hidden space-y-3">
+                  {completeOrders.map((order) => (
+                    <div key={order.id || order.order_id} className="bg-gray-50 p-3 rounded-lg">
+                      <div className="font-medium text-sm mb-2">ORD-{(order.order_id || "").toString().padStart(3, '0')}</div>
+                      <div className="grid grid-cols-2 gap-1 text-xs">
+                        <div className="text-gray-500">Customer:</div>
+                        <div>{order.customer_name || "Unknown"}</div>
+                        <div className="text-gray-500">Date:</div>
+                        <div>{order.date ? new Date(order.date).toLocaleDateString() : "N/A"}</div>
+                        <div className="text-gray-500">Amount:</div>
+                        <div>₱{(parseFloat(order.total) || 0).toLocaleString()}</div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </>
             )}
           </div>
         );
-        
+
       case "dishes":
         return (
-          <div className="bg-white p-6 rounded-lg shadow-md">
-            <h3 className="text-xl font-semibold mb-4">Dishes</h3>
+          <div className="bg-white p-4 md:p-6 rounded-lg shadow-md">
+            <h3 className="text-lg md:text-xl font-semibold mb-2 md:mb-4">Dishes</h3>
             {loadingDishes ? (
               <p>Loading dishes data...</p>
             ) : dishesError ? (
@@ -579,32 +707,55 @@ useEffect(() => {
             ) : !dishes || dishes.length === 0 ? (
               <p>No dishes found.</p>
             ) : (
-              <div className="overflow-x-auto">
-                <table className="min-w-full divide-y divide-gray-200">
-                  <thead className="bg-gray-50">
-                    <tr>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Dish Name</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Category</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Price</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
-                    </tr>
-                  </thead>
-                  <tbody className="bg-white divide-y divide-gray-200">
-                    {dishes.map((dish) => (
-                      <tr key={dish.id}>
-                        <td className="px-6 py-4 whitespace-nowrap">{dish.dish_name || "Unknown"}</td>
-                        <td className="px-6 py-4 whitespace-nowrap">{dish.category || "Uncategorized"}</td>
-                        <td className="px-6 py-4 whitespace-nowrap">₱{dish.price || "0"}</td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <span className={`px-2 py-1 rounded-md ${dish.status === "Available" ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"}`}>
-                            {dish.status || "Unknown"}
-                          </span>
-                        </td>
+              <>
+                {/* Desktop and tablet view */}
+                <div className="hidden sm:block overflow-x-auto">
+                  <table className="min-w-full divide-y divide-gray-200">
+                    <thead className="bg-gray-50">
+                      <tr>
+                        <th className="px-2 py-2 md:px-6 md:py-3 text-left text-xs font-medium text-gray-500 uppercase">Dish Name</th>
+                        <th className="px-2 py-2 md:px-6 md:py-3 text-left text-xs font-medium text-gray-500 uppercase">Category</th>
+                        <th className="px-2 py-2 md:px-6 md:py-3 text-left text-xs font-medium text-gray-500 uppercase">Price</th>
+                        <th className="px-2 py-2 md:px-6 md:py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+                    </thead>
+                    <tbody className="bg-white divide-y divide-gray-200">
+                      {dishes.map((dish) => (
+                        <tr key={dish.id}>
+                          <td className="px-2 py-2 md:px-6 md:py-4 whitespace-nowrap text-xs md:text-sm">{dish.dish_name || "Unknown"}</td>
+                          <td className="px-2 py-2 md:px-6 md:py-4 whitespace-nowrap text-xs md:text-sm">{dish.category || "Uncategorized"}</td>
+                          <td className="px-2 py-2 md:px-6 md:py-4 whitespace-nowrap text-xs md:text-sm">₱{dish.price || "0"}</td>
+                          <td className="px-2 py-2 md:px-6 md:py-4 whitespace-nowrap text-xs md:text-sm">
+                            <span className={`px-2 py-1 rounded-md text-xs ${dish.status === "Available" ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"}`}>
+                              {dish.status || "Unknown"}
+                            </span>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+
+                {/* Mobile view */}
+                <div className="sm:hidden space-y-3">
+                  {dishes.map((dish) => (
+                    <div key={dish.id} className="bg-gray-50 p-3 rounded-lg">
+                      <div className="flex justify-between items-center mb-2">
+                        <span className="font-medium text-sm">{dish.dish_name || "Unknown"}</span>
+                        <span className={`px-2 py-1 rounded-md text-xs ${dish.status === "Available" ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"}`}>
+                          {dish.status || "Unknown"}
+                        </span>
+                      </div>
+                      <div className="grid grid-cols-2 gap-1 text-xs">
+                        <div className="text-gray-500">Category:</div>
+                        <div>{dish.category || "Uncategorized"}</div>
+                        <div className="text-gray-500">Price:</div>
+                        <div>₱{dish.price || "0"}</div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </>
             )}
           </div>
         );
@@ -612,15 +763,14 @@ useEffect(() => {
         return null;
     }
   };
-
   // Render top products - Updated to handle the new data structure
   const renderTopProducts = () => {
     const topProducts = analyticsData?.topProducts || [];
-    
+
     if (!topProducts || topProducts.length === 0) {
       return null;
     }
-    
+
     return (
       <div className="mt-8">
         <h2 className="font-semibold text-lg mb-4">Top Products</h2>
@@ -650,8 +800,8 @@ useEffect(() => {
 
   return (
     <div className="flex flex-col h-screen ">
-     {/* Navbar */}
-     <div className="w-full flex items-center justify-between py-2 px-4 md:px-8 lg:px-12 shadow-md bg-white z-30 relative">
+      {/* Navbar */}
+      <div className="fixed top-0 left-0 right-0 flex items-center justify-between py-2 px-4 md:px-8 lg:px-12 shadow-md bg-white z-40">
         {/* Mobile Toggle Button - Only visible on small screens */}
         <button
           onClick={toggleSidebar}
@@ -701,11 +851,11 @@ useEffect(() => {
         <div className={`
                 ${isOpen ? 'translate-x-0' : '-translate-x-full'} 
                 lg:translate-x-0
-                fixed lg:static inset-y-0 left-0 z-40
+                fixed inset-y-0 left-0 z-40
                 w-64 md:w-72 lg:w-64 flex-none bg-white shadow-lg 
-                h-screen lg:h-[calc(100vh-80px)] flex flex-col justify-between p-5
+                h-screen flex flex-col justify-between p-5
                 transition-transform duration-300 ease-in-out
-                top-0 lg:top-20
+                top-0 lg:top-20 lg:h-[calc(100vh-80px)]
             `}>
           {/* Close button - Only visible on small screens when open */}
           <button
@@ -789,21 +939,31 @@ useEffect(() => {
                 handleLogout(e);
               }}
             >
-              <button
-                className="w-full font-medium flex items-center justify-center space-x-2 bg-[#1C359A] hover:bg-blue-800 text-white px-4 py-3 rounded-lg transition-colors duration-200"
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                  <path fillRule="evenodd" d="M3 3a1 1 0 00-1 1v12a1 1 0 001 1h12a1 1 0 001-1V4a1 1 0 00-1-1H3zm11 4a1 1 0 10-2 0v4.586l-1.293-1.293a1 1 0 10-1.414 1.414l3 3a1 1 0 001.414 0l3-3a1 1 0 00-1.414-1.414L14 11.586V7z" clipRule="evenodd" />
-                </svg>
-                <span>SIGN OUT</span>
-              </button>
+             <button
+  className="w-full font-medium flex items-center justify-center space-x-2 bg-[#1C359A] hover:bg-blue-800 text-white px-4 py-3 rounded-lg transition-colors duration-200"
+>
+  <svg 
+    xmlns="http://www.w3.org/2000/svg" 
+    width="20" 
+    height="20" 
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+  >
+    <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4" />
+    <polyline points="16 17 21 12 16 7" />
+    <line x1="21" y1="12" x2="9" y2="12" />
+  </svg>
+  <span>SIGN OUT</span>
+</button>
             </Link>
           </div>
         </div>
-        
+
 
         {/* Main Content */}
-        <div className="flex-1 p-6 overflow-auto">
+        <div className="flex-1 w-full p-2 sm:p-4 md:p-6 overflow-auto bg-[#DCDEEA] mt-22 lg:ml-64">  {/* Header Section */}
           <div className="mb-6">
             <h1 className="text-2xl font-bold text-[#1C359A] mb-2">Sales Analytics</h1>
             <p className="text-gray-600">View and analyze your coffee shop's performance</p>
@@ -814,31 +974,28 @@ useEffect(() => {
             <div className="inline-flex rounded-md shadow-sm">
               <button
                 onClick={() => setTimeRange("daily")}
-                className={`px-6 py-2 rounded-l-lg ${
-                  timeRange === "daily"
+                className={`px-6 py-2 rounded-l-lg ${timeRange === "daily"
                     ? "bg-[#1C359A] text-white"
                     : "bg-white text-gray-700 hover:bg-gray-100"
-                }`}
+                  }`}
               >
                 Daily
               </button>
               <button
                 onClick={() => setTimeRange("monthly")}
-                className={`px-6 py-2 ${
-                  timeRange === "monthly"
+                className={`px-6 py-2 ${timeRange === "monthly"
                     ? "bg-[#1C359A] text-white"
                     : "bg-white text-gray-700 hover:bg-gray-100"
-                }`}
+                  }`}
               >
                 Monthly
               </button>
               <button
                 onClick={() => setTimeRange("yearly")}
-                className={`px-6 py-2 rounded-r-lg ${
-                  timeRange === "yearly"
+                className={`px-6 py-2 rounded-r-lg ${timeRange === "yearly"
                     ? "bg-[#1C359A] text-white"
                     : "bg-white text-gray-700 hover:bg-gray-100"
-                }`}
+                  }`}
               >
                 Yearly
               </button>
@@ -857,48 +1014,50 @@ useEffect(() => {
 
           {/* Sales Chart */}
           {renderChart()}
-          
+
           {/* Tabbed Interface */}
           <div className="mt-8">
             <h2 className="font-semibold text-lg mb-4">Order Analysis</h2>
-            
+
             {/* Tabs */}
             <div className="flex mb-4 border-b">
-              <button 
+              <button
                 onClick={() => setActiveTab("complete")}
-                className={`py-2 px-4 mr-2 font-medium ${activeTab === "complete" 
-                  ? "text-[#1C359A] border-b-2 border-[#1C359A]" 
+                className={`py-2 px-4 mr-2 font-medium ${activeTab === "complete"
+                  ? "text-[#1C359A] border-b-2 border-[#1C359A]"
                   : "text-gray-500 hover:text-gray-700"}`}
               >
                 Complete Orders
               </button>
-              <button 
+              <button
                 onClick={() => setActiveTab("cancelled")}
-                className={`py-2 px-4 mr-2 font-medium ${activeTab === "cancelled" 
-                  ? "text-[#1C359A] border-b-2 border-[#1C359A]" 
+                className={`py-2 px-4 mr-2 font-medium ${activeTab === "cancelled"
+                  ? "text-[#1C359A] border-b-2 border-[#1C359A]"
                   : "text-gray-500 hover:text-gray-700"}`}
               >
                 Cancelled Orders
               </button>
-              <button 
+              <button
                 onClick={() => setActiveTab("dishes")}
-                className={`py-2 px-4 font-medium ${activeTab === "dishes" 
-                  ? "text-[#1C359A] border-b-2 border-[#1C359A]" 
+                className={`py-2 px-4 font-medium ${activeTab === "dishes"
+                  ? "text-[#1C359A] border-b-2 border-[#1C359A]"
                   : "text-gray-500 hover:text-gray-700"}`}
               >
                 Dishes
               </button>
             </div>
-            
+
             {/* Tab Content */}
             {renderTabContent()}
           </div>
-          
+
           {/* Top Products Table (if data is available) */}
           {analyticsData && analyticsData.topProducts && (
             <div className="mt-8">
               <h2 className="font-semibold text-lg mb-4">Top Products</h2>
-              <div className="bg-white rounded-lg shadow-md overflow-hidden">
+
+              {/* Desktop/Tablet View */}
+              <div className="hidden sm:block bg-white rounded-lg shadow-md overflow-hidden">
                 <table className="min-w-full divide-y divide-gray-200">
                   <thead className="bg-gray-50">
                     <tr>
@@ -917,6 +1076,25 @@ useEffect(() => {
                     ))}
                   </tbody>
                 </table>
+              </div>
+
+              {/* Mobile View */}
+              <div className="sm:hidden space-y-4">
+                {analyticsData.topProducts.map((product, index) => (
+                  <div key={index} className="bg-white rounded-lg shadow-sm p-4">
+                    <div className="font-medium mb-2">{product.name}</div>
+                    <div className="grid grid-cols-2 gap-2 text-sm">
+                      <div>
+                        <span className="text-gray-500">Quantity Sold:</span>
+                        <p className="font-medium">{product.quantity}</p>
+                      </div>
+                      <div>
+                        <span className="text-gray-500">Revenue:</span>
+                        <p className="font-medium">₱{product.revenue.toLocaleString()}</p>
+                      </div>
+                    </div>
+                  </div>
+                ))}
               </div>
             </div>
           )}

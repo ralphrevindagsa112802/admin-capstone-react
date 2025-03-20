@@ -47,8 +47,9 @@ const AdminFeedback = () => {
   return (
     <div className="flex flex-col h-screen">
     {/* Navbar */}
-    <div className="w-full flex items-center justify-between py-2 px-4 md:px-8 lg:px-12 shadow-md bg-white z-30 relative">
-        {/* Mobile Toggle Button - Only visible on small screens */}
+{/* Navbar */}
+<div className="fixed top-0 left-0 right-0 flex items-center justify-between py-2 px-4 md:px-8 lg:px-12 shadow-md bg-white z-40">
+          {/* Mobile Toggle Button - Only visible on small screens */}
         <button
           onClick={toggleSidebar}
           className="lg:hidden flex items-center justify-center text-[#1C359A] p-2 rounded-full hover:bg-gray-100"
@@ -97,11 +98,11 @@ const AdminFeedback = () => {
         <div className={`
                 ${isOpen ? 'translate-x-0' : '-translate-x-full'} 
                 lg:translate-x-0
-                fixed lg:static inset-y-0 left-0 z-40
+                fixed inset-y-0 left-0 z-40
                 w-64 md:w-72 lg:w-64 flex-none bg-white shadow-lg 
-                h-screen lg:h-[calc(100vh-80px)] flex flex-col justify-between p-5
+                h-screen flex flex-col justify-between p-5
                 transition-transform duration-300 ease-in-out
-                top-0 lg:top-20
+                top-0 lg:top-20 lg:h-[calc(100vh-80px)]
             `}>
           {/* Close button - Only visible on small screens when open */}
           <button
@@ -185,57 +186,100 @@ const AdminFeedback = () => {
                 handleLogout(e);
               }}
             >
-              <button
-                className="w-full font-medium flex items-center justify-center space-x-2 bg-[#1C359A] hover:bg-blue-800 text-white px-4 py-3 rounded-lg transition-colors duration-200"
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                  <path fillRule="evenodd" d="M3 3a1 1 0 00-1 1v12a1 1 0 001 1h12a1 1 0 001-1V4a1 1 0 00-1-1H3zm11 4a1 1 0 10-2 0v4.586l-1.293-1.293a1 1 0 10-1.414 1.414l3 3a1 1 0 001.414 0l3-3a1 1 0 00-1.414-1.414L14 11.586V7z" clipRule="evenodd" />
-                </svg>
-                <span>SIGN OUT</span>
-              </button>
+             <button
+                                className="w-full font-medium flex items-center justify-center space-x-2 bg-[#1C359A] hover:bg-blue-800 text-white px-4 py-3 rounded-lg transition-colors duration-200"
+                            >
+                                <svg
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    width="20"
+                                    height="20"
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    strokeWidth="2"
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                >
+                                    <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                                    <polyline points="16 17 21 12 16 7"></polyline>
+                                    <line x1="21" y1="12" x2="9" y2="12"></line>
+                                </svg>
+                                <span>SIGN OUT</span>
+                            </button>
             </Link>
           </div>
         </div>
 
         {/* Main Content (Feedback Management) */}
-        <div className="flex-1 w-full p-6 overflow-auto bg-[#DCDEEA]">
-          {/* Header Section */}
-          <div className="w-full flex justify-between">
-            <div className="text-[#1C359A] text-lg font-bold">Feedback</div>
-          </div>
+        <div className="flex-1 w-full p-2 sm:p-4 md:p-6 overflow-auto bg-[#DCDEEA] mt-22 lg:ml-64">  {/* Header Section */}
+  <div className="w-full flex justify-between items-center">
+    <div className="text-[#1C359A] text-base sm:text-lg font-bold">Feedback</div>
+  </div>
 
-          {/* Feedback Table */}
-          <div className="p-2 w-full mt-6 rounded-2xl">
-            <table className="w-full bg-white opacity-90 rounded-2xl">
-              <thead>
-                <tr className="border-t border-4 border-[#DCDEEA]">
-                  <th className="p-3 text-left text-[#808080]">#</th>
-                  <th className="px-4 py-2 text-left text-sm text-[#808080]">Customer</th>
-                  <th className="px-4 py-2 text-left text-sm text-[#808080]">Email</th>
-                  <th className="px-4 py-2 text-left text-sm text-[#808080]">Feedback</th>
-                  <th className="px-4 py-2 text-left text-sm text-[#808080]">Rating</th>
-                </tr>
-              </thead>
-              <tbody>
-                {feedbackData.length > 0 ? (
-                  feedbackData.map((feedback, index) => (
-                    <tr key={index} className="border-t border-4 border-[#DCDEEA] hover:bg-gray-100">
-                      <td className="p-3">{index + 1}</td>
-                      <td className="px-4 py-2">{feedback.f_name} {feedback.l_name}</td>
-                      <td className="px-4 py-2">{feedback.email}</td>
-                      <td className="px-4 py-2">{feedback.order_feedback}</td>
-                      <td className="px-4 py-2">{feedback.feedback_score}</td>
-                    </tr>
-                  ))
-                ) : (
-                  <tr>
-                    <td colSpan="3" className="px-4 py-2 text-center">No feedback available</td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
+  {/* Feedback Table - For desktop and tablet */}
+  <div className="hidden sm:block w-full mt-4 md:mt-6 rounded-xl md:rounded-2xl">
+    <div className="overflow-x-auto">
+      <table className="w-full bg-white opacity-90 rounded-xl md:rounded-2xl">
+        <thead>
+          <tr className="border-t border-4 border-[#DCDEEA]">
+            <th className="p-2 md:p-3 text-left text-[#808080]">#</th>
+            <th className="px-2 md:px-4 py-2 text-left text-xs md:text-sm text-[#808080]">Customer</th>
+            <th className="px-2 md:px-4 py-2 text-left text-xs md:text-sm text-[#808080]">Email</th>
+            <th className="px-2 md:px-4 py-2 text-left text-xs md:text-sm text-[#808080]">Feedback</th>
+            <th className="px-2 md:px-4 py-2 text-left text-xs md:text-sm text-[#808080]">Rating</th>
+          </tr>
+        </thead>
+        <tbody>
+          {feedbackData.length > 0 ? (
+            feedbackData.map((feedback, index) => (
+              <tr key={index} className="border-t border-4 border-[#DCDEEA] hover:bg-gray-100">
+                <td className="p-2 md:p-3">{index + 1}</td>
+                <td className="px-2 md:px-4 py-2 text-xs md:text-sm">{feedback.f_name} {feedback.l_name}</td>
+                <td className="px-2 md:px-4 py-2 text-xs md:text-sm">{feedback.email}</td>
+                <td className="px-2 md:px-4 py-2 text-xs md:text-sm">{feedback.order_feedback}</td>
+                <td className="px-2 md:px-4 py-2 text-xs md:text-sm">{feedback.feedback_score}</td>
+              </tr>
+            ))
+          ) : (
+            <tr>
+              <td colSpan="5" className="px-2 md:px-4 py-2 text-center">No feedback available</td>
+            </tr>
+          )}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  {/* Mobile version - Card-based layout */}
+  <div className="sm:hidden w-full mt-4">
+    {feedbackData.length > 0 ? (
+      feedbackData.map((feedback, index) => (
+        <div key={index} className="bg-white rounded-lg mb-3 p-3 shadow-sm">
+          <div className="flex justify-between items-center mb-2">
+            <span className="font-medium">#{index + 1}</span>
+            <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs">
+              Rating: {feedback.feedback_score}
+            </span>
+          </div>
+          <div className="mb-1">
+            <span className="text-sm font-medium text-[#808080]">Customer: </span>
+            <span className="text-sm">{feedback.f_name} {feedback.l_name}</span>
+          </div>
+          <div className="mb-1">
+            <span className="text-sm font-medium text-[#808080]">Email: </span>
+            <span className="text-sm">{feedback.email}</span>
+          </div>
+          <div>
+            <span className="text-sm font-medium text-[#808080]">Feedback: </span>
+            <span className="text-sm">{feedback.order_feedback}</span>
           </div>
         </div>
+      ))
+    ) : (
+      <div className="bg-white rounded-lg p-4 text-center">No feedback available</div>
+    )}
+  </div>
+</div>
       </div>
     </div>
   );

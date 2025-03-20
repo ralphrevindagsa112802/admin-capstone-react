@@ -265,9 +265,14 @@ const AdminDashboard = () => {
 
 
     // Format date to YYYY-MM-DD for comparison
+    // Update the formatDate function to handle timezone properly
     const formatDate = (dateString) => {
         const date = new Date(dateString);
-        return date.toISOString().split('T')[0];
+        // Get local date components
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0'); // Months are 0-indexed
+        const day = String(date.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
     };
 
     // Handle date selection from calendar
@@ -275,6 +280,7 @@ const AdminDashboard = () => {
         setSelectedDate(date);
     };
 
+    // Apply the date filter
     // Apply the date filter
     const applyDateFilter = () => {
         if (!selectedDate) {
@@ -285,11 +291,15 @@ const AdminDashboard = () => {
         }
 
         const selected = formatDate(selectedDate);
+        console.log("Selected date:", selected); // For debugging
+
         const filtered = orders.filter(order => {
             const orderDate = formatDate(order.created_at);
+            console.log(`Order ${order.orders_id} date: ${orderDate}`); // For debugging
             return orderDate === selected;
         });
 
+        console.log("Filtered orders:", filtered.length); // For debugging
         setFilteredOrders(filtered);
         setIsFiltered(true);
         setShowCalendar(false);
@@ -422,12 +432,13 @@ const AdminDashboard = () => {
         };
 
         // Select a date
+        // Select a date
         const selectDate = (day) => {
+            // Create date at midnight local time
             const date = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), day);
             setLocalSelectedDate(date);
             onDateSelect(date);
         };
-
         // Format date for display
         const formatDateDisplay = (date) => {
             if (!date) return '';
@@ -478,44 +489,60 @@ const AdminDashboard = () => {
         const monthName = currentMonth.toLocaleString('default', { month: 'long', year: 'numeric' });
 
         return (
-            <div className="absolute right-0 mt-2 bg-white shadow-lg rounded-lg p-4 z-50 w-80">
-                <div className="flex justify-between items-center mb-4">
-                    <button onClick={prevMonth} className="p-1">&lt;</button>
-                    <h3 className="font-semibold">{monthName}</h3>
-                    <button onClick={nextMonth} className="p-1">&gt;</button>
-                </div>
+            <div className="fixed inset-0 flex items-center justify-center z-50 bg-opacity-50 p-4 md:p-0">
+                <div className="bg-white rounded-lg shadow-lg w-full max-w-sm md:max-w-md overflow-hidden">
+                    <div className="p-4">
+                        {/* Header with month navigation */}
+                        <div className="flex justify-between items-center mb-4">
+                            <button onClick={prevMonth} className="p-2 hover:bg-gray-100 rounded-full">
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                                </svg>
+                            </button>
+                            <h3 className="font-semibold text-lg">{monthName}</h3>
+                            <button onClick={nextMonth} className="p-2 hover:bg-gray-100 rounded-full">
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                                </svg>
+                            </button>
+                        </div>
 
-                <div className="grid grid-cols-7 gap-1 mb-2">
-                    {['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'].map(day => (
-                        <div key={day} className="text-center text-gray-500 text-xs p-1">{day}</div>
-                    ))}
-                </div>
+                        {/* Days of week header */}
+                        <div className="grid grid-cols-7 gap-1 mb-2">
+                            {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map(day => (
+                                <div key={day} className="text-center text-gray-500 text-xs p-1">{day}</div>
+                            ))}
+                        </div>
 
-                <div className="grid grid-cols-7 gap-1">
-                    {renderDays()}
-                </div>
+                        {/* Calendar grid */}
+                        <div className="grid grid-cols-7 gap-1 justify-items-center">
+                            {renderDays()}
+                        </div>
 
-                <div className="mt-4 flex justify-between">
-                    <div>
-                        {localSelectedDate && (
-                            <div className="text-sm">
-                                Selected: {formatDateDisplay(localSelectedDate)}
+                        {/* Selected date and action buttons */}
+                        <div className="mt-6 flex flex-col sm:flex-row justify-between items-center">
+                            <div className="mb-4 sm:mb-0">
+                                {localSelectedDate && (
+                                    <div className="text-sm">
+                                        Selected: {formatDateDisplay(localSelectedDate)}
+                                    </div>
+                                )}
                             </div>
-                        )}
-                    </div>
-                    <div className="flex space-x-2">
-                        <button
-                            onClick={onClose}
-                            className="px-3 py-1 text-sm border border-gray-300 rounded"
-                        >
-                            Cancel
-                        </button>
-                        <button
-                            onClick={handleApply}
-                            className="px-3 py-1 text-sm bg-blue-600 text-white rounded"
-                        >
-                            Apply
-                        </button>
+                            <div className="flex space-x-2">
+                                <button
+                                    onClick={onClose}
+                                    className="px-4 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-50"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    onClick={handleApply}
+                                    className="px-4 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                                >
+                                    Apply
+                                </button>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -526,8 +553,8 @@ const AdminDashboard = () => {
         <div className="flex flex-col h-screen">
 
             {/* Navbar */}
-            <div className="w-full flex items-center justify-between py-2 px-4 md:px-8 lg:px-12 shadow-md bg-white z-30 relative">
-                {/* Mobile Toggle Button - Only visible on small screens */}
+            {/* Navbar */}
+            <div className="fixed top-0 left-0 right-0 flex items-center justify-between py-2 px-4 md:px-8 lg:px-12 shadow-md bg-white z-40">            {/* Mobile Toggle Button - Only visible on small screens */}
                 <button
                     onClick={toggleSidebar}
                     className="lg:hidden flex items-center justify-center text-[#1C359A] p-2 rounded-full hover:bg-gray-100"
@@ -576,12 +603,12 @@ const AdminDashboard = () => {
                 <div className={`
                 ${isOpen ? 'translate-x-0' : '-translate-x-full'} 
                 lg:translate-x-0
-                fixed lg:static inset-y-0 left-0 z-40
+                fixed inset-y-0 left-0 z-40
                 w-64 md:w-72 lg:w-64 flex-none bg-white shadow-lg 
-                h-screen lg:h-[calc(100vh-80px)] flex flex-col justify-between p-5
+                h-screen flex flex-col justify-between p-5
                 transition-transform duration-300 ease-in-out
-                top-0 lg:top-20 md:h-full
-                `}>
+                top-0 lg:top-20 lg:h-[calc(100vh-80px)]
+            `}>
                     {/* Close button - Only visible on small screens when open */}
                     <button
                         onClick={toggleSidebar}
@@ -667,8 +694,20 @@ const AdminDashboard = () => {
                             <button
                                 className="w-full font-medium flex items-center justify-center space-x-2 bg-[#1C359A] hover:bg-blue-800 text-white px-4 py-3 rounded-lg transition-colors duration-200"
                             >
-                                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                                    <path fillRule="evenodd" d="M3 3a1 1 0 00-1 1v12a1 1 0 001 1h12a1 1 0 001-1V4a1 1 0 00-1-1H3zm11 4a1 1 0 10-2 0v4.586l-1.293-1.293a1 1 0 10-1.414 1.414l3 3a1 1 0 001.414 0l3-3a1 1 0 00-1.414-1.414L14 11.586V7z" clipRule="evenodd" />
+                                <svg
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    width="20"
+                                    height="20"
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    strokeWidth="2"
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                >
+                                    <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                                    <polyline points="16 17 21 12 16 7"></polyline>
+                                    <line x1="21" y1="12" x2="9" y2="12"></line>
                                 </svg>
                                 <span>SIGN OUT</span>
                             </button>
@@ -676,28 +715,26 @@ const AdminDashboard = () => {
                     </div>
                 </div>
 
-                <main className="p-6 w-full overflow-auto bg-[#DCDEEA]">
-                    {/* Header Section */}
-                    <div className="w-full flex justify-between items-center">
+                <main className="flex-1 w-full  p-2 sm:p-4 md:p-6 overflow-auto bg-[#DCDEEA] mt-22 lg:ml-64">                    {/* Header Section */}
+                    <div className="w-full flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-4">
                         <div className="text-[#1C359A] text-lg font-bold">
                             Order Management
                         </div>
-                        <div className="flex gap-2">
+                        <div className="flex flex-wrap gap-2">
                             <button
                                 onClick={handleCompleteOrders}
                                 disabled={isProcessing || selectedOrders.length === 0}
-                                className={`px-4 py-2 border-2 border-[#1C359A] font-bold rounded-md 
-                                ${(isProcessing || selectedOrders.length === 0)
+                                className={`px-3 py-2 text-sm md:px-4 md:py-2 md:text-base border-2 border-[#1C359A] font-bold rounded-md 
+                ${(isProcessing || selectedOrders.length === 0)
                                         ? 'bg-gray-300 border-gray-400 text-gray-600 cursor-not-allowed'
                                         : 'text-black hover:bg-white'}`}
                             >
                                 {isProcessing ? "Processing..." : `Complete (${selectedOrders.length})`}
                             </button>
-
                             <div className="relative">
                                 <button
                                     onClick={toggleCalendar}
-                                    className="px-4 py-2 border-2 border-[#1C359A] text-black font-bold rounded-md flex items-center space-x-2 hover:bg-white"
+                                    className="px-3 py-2 text-sm md:px-4 md:py-2 md:text-base border-2 border-[#1C359A] text-black font-bold rounded-md flex items-center space-x-2 hover:bg-white"
                                 >
                                     <svg
                                         xmlns="http://www.w3.org/2000/svg"
@@ -705,7 +742,7 @@ const AdminDashboard = () => {
                                         viewBox="0 0 24 24"
                                         strokeWidth="1.5"
                                         stroke="currentColor"
-                                        className="w-5 h-5"
+                                        className="w-4 h-4 md:w-5 md:h-5"
                                     >
                                         <path
                                             strokeLinecap="round"
@@ -715,7 +752,6 @@ const AdminDashboard = () => {
                                     </svg>
                                     <span>Filter</span>
                                 </button>
-
                                 {showCalendar && (
                                     <Calendar
                                         onDateSelect={handleDateSelection}
@@ -724,11 +760,10 @@ const AdminDashboard = () => {
                                     />
                                 )}
                             </div>
-
                             {isFiltered && (
                                 <button
                                     onClick={clearDateFilter}
-                                    className="px-4 py-2 border-2 border-red-500 text-red-500 font-bold rounded-md hover:bg-red-50"
+                                    className="px-3 py-2 text-sm md:px-4 md:py-2 md:text-base border-2 border-red-500 text-red-500 font-bold rounded-md hover:bg-red-50"
                                 >
                                     Clear Filter
                                 </button>
@@ -738,102 +773,180 @@ const AdminDashboard = () => {
 
                     {/* Filter indicator */}
                     {isFiltered && (
-                        <div className="mt-2 p-2 bg-blue-50 text-blue-700 rounded-md flex items-center">
-                            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <div className="mt-2 p-2 bg-blue-50 text-blue-700 rounded-md flex items-center text-sm md:text-base">
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 md:h-5 md:w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
                             </svg>
-                            <span>
+                            <span className="text-xs sm:text-sm">
                                 Filtering orders from: {selectedDate?.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
                                 {filteredOrders.length === 0 ? ' (No orders found)' : ` (${filteredOrders.length} orders)`}
                             </span>
                         </div>
                     )}
 
-                    <div className="p-2 w-full mt-6 rounded-2xl">
-                        <table className="w-full bg-white opacity-90 rounded-2xl">
-                            <thead>
-                                <tr className="border-t border-4 border-[#DCDEEA]">
-                                    <th className="p-3 text-left text-[#808080]">
-                                        <input
-                                            type="checkbox"
-                                            checked={selectedOrders.length === filteredOrders.filter(order => !completedOrders.includes(order.orders_id)).length && filteredOrders.length > 0}
-                                            onChange={handleSelectAll}
-                                        />
-                                    </th>
-                                    <th className="p-3 text-left text-sm text-[#808080]">Order #</th>
-                                    <th className="p-3 text-left text-sm text-[#808080]">Date</th>
-                                    <th className="p-3 text-left text-sm text-[#808080]">Customer</th>
-                                    <th className="p-3 text-left text-sm text-[#808080]">Location</th>
-                                    <th className="p-3 text-left text-sm text-[#808080]">Phone</th>
-                                    <th className="p-3 text-left text-sm text-[#808080]">Service Option</th>
-                                    <th className="p-3 text-left text-sm text-[#808080]">Details</th>
-                                    <th className="p-3 text-left text-sm text-[#808080]">Total</th>
-                                    <th className="p-3 text-left text-sm text-[#808080]">Status</th>
-                                    <th className="p-3 text-left text-sm text-[#808080]">Update</th>
-                                </tr>
-                            </thead>
+                    {/* Responsive Table */}
+                    <div className="w-full mt-4 md:mt-6 rounded-2xl overflow-hidden">
+                        <div className="overflow-x-auto">
+                            <table className="min-w-full md:bg-white opacity-90 rounded-2xl">
+                                <thead className="hidden md:table-header-group">
+                                    <tr className="border-t border-4 border-[#DCDEEA]">
+                                        <th className="p-3 text-left text-[#808080]">
+                                            <input
+                                                type="checkbox"
+                                                checked={selectedOrders.length === filteredOrders.filter(order => !completedOrders.includes(order.orders_id)).length && filteredOrders.length > 0}
+                                                onChange={handleSelectAll}
+                                            />
+                                        </th>
+                                        <th className="p-3 text-left text-sm text-[#808080]">Order #</th>
+                                        <th className="p-3 text-left text-sm text-[#808080]">Date</th>
+                                        <th className="p-3 text-left text-sm text-[#808080]">Customer</th>
+                                        <th className="p-3 text-left text-sm text-[#808080]">Location</th>
+                                        <th className="p-3 text-left text-sm text-[#808080]">Phone</th>
+                                        <th className="p-3 text-left text-sm text-[#808080]">Service Option</th>
+                                        <th className="p-3 text-left text-sm text-[#808080]">Details</th>
+                                        <th className="p-3 text-left text-sm text-[#808080]">Total</th>
+                                        <th className="p-3 text-left text-sm text-[#808080]">Status</th>
+                                        <th className="p-3 text-left text-sm text-[#808080]">Update</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {filteredOrders.length > 0 ? (
+                                        filteredOrders.map((order) => (
+                                            <>
+                                                {/* Desktop/Tablet View */}
+                                                <tr key={`desktop-${order.orders_id}`} className="hidden md:table-row border-t border-4 border-[#DCDEEA] hover:bg-gray-100">
+                                                    <td className="p-3">
+                                                        <input
+                                                            type="checkbox"
+                                                            checked={selectedOrders.includes(order.orders_id)}
+                                                            onChange={() => handleCheckboxChange(order.orders_id)}
+                                                        />
+                                                    </td>
+                                                    <td className="p-3 text-sm">{order.orders_id}</td>
+                                                    <td className="p-3 text-sm">{order.created_at}</td>
+                                                    <td className="p-3 text-sm">{order.user.full_name}</td>
+                                                    <td className="p-3 text-sm">{order.user.address}</td>
+                                                    <td className="p-3 text-sm">{order.user.phone}</td>
+                                                    <td className="p-3 text-sm">{order.shipping_method}</td>
+                                                    <td className="p-3 text-sm">
+                                                        <button onClick={() => handleViewDetails(order)} className="text-blue-500 hover:text-blue-700">
+                                                            <FaEye />
+                                                        </button>
+                                                    </td>
+                                                    <td className="p-3 text-sm">₱{order.total_amount}</td>
+                                                    <td className="p-3 font-semibold">
+                                                        {orderStatuses[order.orders_id] || "Loading..."}
+                                                    </td>
+                                                    <td className="p-3 relative">
+                                                        <button onClick={() => handleDropdownToggle(order.orders_id)} className="text-gray-600 hover:text-black">
+                                                            <FaEllipsisV />
+                                                        </button>
+                                                        {openDropdown === order.orders_id && (
+                                                            <div className="absolute right-0 mt-2 w-48 bg-white border border-gray-300 shadow-md rounded-lg z-50">
+                                                                <p className="text-blue-600 text-center font-semibold py-2">Update Status</p>
+                                                                <div className="flex flex-col">
+                                                                    {["Pending", "Processing", "Out For Delivery", "Ready to pickup"].map((status) => (
+                                                                        <button
+                                                                            key={status}
+                                                                            onClick={() => handleStatusUpdate(order.orders_id, status)}
+                                                                            className="px-4 py-2 text-left hover:bg-gray-100 text-sm text-gray-700"
+                                                                        >
+                                                                            {status}
+                                                                        </button>
+                                                                    ))}
+                                                                </div>
+                                                            </div>
+                                                        )}
+                                                    </td>
+                                                </tr>
 
-                            <tbody>
-                                {filteredOrders.length > 0 ? (
-                                    filteredOrders.map((order) => (
-                                        <tr key={order.orders_id} className="border-t border-4 border-[#DCDEEA] hover:bg-gray-100">
-                                            <td className="p-3">
-                                                <input
-                                                    type="checkbox"
-                                                    checked={selectedOrders.includes(order.orders_id)}
-                                                    onChange={() => handleCheckboxChange(order.orders_id)}
-                                                />
-                                            </td>
-                                            <td className="p-3 text-sm">{order.orders_id}</td>
-                                            <td className="p-3 text-sm">{order.created_at}</td>
-                                            <td className="p-3 text-sm">{order.user.full_name}</td>
-                                            <td className="p-3 text-sm">{order.user.address}</td>
-                                            <td className="p-3 text-sm">{order.user.phone}</td>
-                                            <td className="p-3 text-sm">{order.shipping_method}</td>
-                                            <td className="p-3 text-sm">
-                                                <button onClick={() => handleViewDetails(order)} className="text-blue-500 hover:text-blue-700">
-                                                    <FaEye />
-                                                </button>
-                                            </td>
-                                            <td className="p-3 text-sm">₱{order.total_amount}</td>
-                                            <td className="p-3 font-semibold">
-                                                {orderStatuses[order.orders_id] || "Loading..."}
-                                            </td>
-                                            <td className="p-3 relative">
-                                                <button onClick={() => handleDropdownToggle(order.orders_id)} className="text-gray-600 hover:text-black">
-                                                    <FaEllipsisV />
-                                                </button>
-
-                                                {openDropdown === order.orders_id && (
-                                                    <div className="absolute right-0 mt-2 w-48 bg-white border border-gray-300 shadow-md rounded-lg z-50">
-                                                        <p className="text-blue-600 text-center font-semibold py-2">Update Status</p>
-                                                        <div className="flex flex-col">
-                                                            {["Pending", "Processing", "Out For Delivery", "Ready to pickup"].map((status) => (
-                                                                <button
-                                                                    key={status}
-                                                                    onClick={() => handleStatusUpdate(order.orders_id, status)}
-                                                                    className="px-4 py-2 text-left hover:bg-gray-100 text-sm text-gray-700"
-                                                                >
-                                                                    {status}
+                                                {/* Mobile View - Card Style */}
+                                                <div key={`mobile-${order.orders_id}`} className="md:hidden bg-white rounded-lg shadow-sm mb-4 p-4 border-l-4 border-[#1C359A]">
+                                                    <div className="flex justify-between items-start mb-3">
+                                                        <div>
+                                                            <div className="flex items-center">
+                                                                <input
+                                                                    type="checkbox"
+                                                                    checked={selectedOrders.includes(order.orders_id)}
+                                                                    onChange={() => handleCheckboxChange(order.orders_id)}
+                                                                    className="mr-2"
+                                                                />
+                                                                <span className="font-semibold text-sm">Order #{order.orders_id}</span>
+                                                            </div>
+                                                            <p className="text-xs text-gray-500 mt-1">{order.created_at}</p>
+                                                        </div>
+                                                        <div className="flex items-center">
+                                                            <span className="text-sm font-semibold mr-2">₱{order.total_amount}</span>
+                                                            <div className="relative">
+                                                                <button onClick={() => handleDropdownToggle(order.orders_id)} className="text-gray-600 hover:text-black">
+                                                                    <FaEllipsisV />
                                                                 </button>
-                                                            ))}
+                                                                {openDropdown === order.orders_id && (
+                                                                    <div className="absolute right-0 mt-2 w-48 bg-white border border-gray-300 shadow-md rounded-lg z-50">
+                                                                        <p className="text-blue-600 text-center font-semibold py-2">Update Status</p>
+                                                                        <div className="flex flex-col">
+                                                                            {["Pending", "Processing", "Out For Delivery", "Ready to pickup"].map((status) => (
+                                                                                <button
+                                                                                    key={status}
+                                                                                    onClick={() => handleStatusUpdate(order.orders_id, status)}
+                                                                                    className="px-4 py-2 text-left hover:bg-gray-100 text-xs text-gray-700"
+                                                                                >
+                                                                                    {status}
+                                                                                </button>
+                                                                            ))}
+                                                                        </div>
+                                                                    </div>
+                                                                )}
+                                                            </div>
                                                         </div>
                                                     </div>
-                                                )}
+
+                                                    <div className="grid grid-cols-2 gap-2 text-xs mb-2">
+                                                        <div>
+                                                            <p className="text-gray-500">Customer:</p>
+                                                            <p>{order.user.full_name}</p>
+                                                        </div>
+                                                        <div>
+                                                            <p className="text-gray-500">Phone:</p>
+                                                            <p>{order.user.phone}</p>
+                                                        </div>
+                                                        <div>
+                                                            <p className="text-gray-500">Service:</p>
+                                                            <p>{order.shipping_method}</p>
+                                                        </div>
+                                                        <div>
+                                                            <p className="text-gray-500">Status:</p>
+                                                            <p className="font-medium">{orderStatuses[order.orders_id] || "Loading..."}</p>
+                                                        </div>
+                                                    </div>
+
+                                                    <div className="mt-3 pt-3 border-t border-gray-200 flex justify-between items-center">
+                                                        <div>
+                                                            <p className="text-xs text-gray-500">Location:</p>
+                                                            <p className="text-xs">{order.user.address}</p>
+                                                        </div>
+                                                        <button
+                                                            onClick={() => handleViewDetails(order)}
+                                                            className="text-xs bg-blue-50 text-blue-600 px-3 py-1 rounded flex items-center"
+                                                        >
+                                                            <FaEye className="mr-1" size={12} /> Details
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </>
+                                        ))
+                                    ) : (
+                                        <tr className="border-t border-4 border-[#DCDEEA] hover:bg-gray-100">
+                                            <td colSpan="11" className="text-center p-3">
+                                                {isFiltered
+                                                    ? "No orders found for the selected date"
+                                                    : "No orders found"}
                                             </td>
                                         </tr>
-                                    ))
-                                ) : (
-                                    <tr className='border-t border-4 border-[#DCDEEA] hover:bg-gray-100'>
-                                        <td colSpan="11" className="text-center p-3">
-                                            {isFiltered
-                                                ? "No orders found for the selected date"
-                                                : "No orders found"}
-                                        </td>
-                                    </tr>
-                                )}
-                            </tbody>
-                        </table>
+                                    )}
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 </main>
             </div>
