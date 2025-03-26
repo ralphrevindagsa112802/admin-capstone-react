@@ -67,7 +67,6 @@ const AdminAnalytics = () => {
     fetchAnalyticsData();
   }, [timeRange]);
 
-  // Fetch total sales from API
   useEffect(() => {
     const fetchTotalSales = async () => {
       try {
@@ -76,7 +75,7 @@ const AdminAnalytics = () => {
           { withCredentials: true }
         );
         console.log("Total Sales API Response:", response.data);
-
+  
         if (response.data && response.data.total_sales !== undefined) {
           setTotalSales(response.data.total_sales);
         } else {
@@ -88,9 +87,36 @@ const AdminAnalytics = () => {
         setTotalSales(0); // Default to 0 on error
       }
     };
-
+  
     fetchTotalSales();
   }, []);
+
+  useEffect(() => {
+    const fetchTotalSales = async () => {
+      setTotalSales(0); // Ensure it resets before fetching to prevent incorrect values
+      try {
+        const response = await axios.get(
+          "https://yappari-coffee-bar.shop/api/total_sales",
+          { withCredentials: true }
+        );
+        console.log("Total Sales API Response:", response.data);
+  
+        if (response.data && response.data.total_sales !== undefined) {
+          setTotalSales(response.data.total_sales);
+        } else {
+          console.error("Invalid total_sales data:", response.data);
+          setTotalSales(0);
+        }
+      } catch (error) {
+        console.error("Failed to fetch total sales:", error);
+        setTotalSales(0);
+      }
+    };
+  
+    fetchTotalSales();
+  }, [timeRange]); // Fetch again when timeRange changes
+  
+  
 
   // Fetch user count from database
   useEffect(() => {
