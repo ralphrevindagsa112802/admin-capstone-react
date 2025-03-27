@@ -105,7 +105,75 @@ describe('Admin Menu Component', () => {
     ]);
   });
 
-  // Test Case 4: Edit Product Succesfully
+  // Test Case 4: Open Edit Product Modal
+  it('opens edit product modal when edit button is clicked', async () => {
+    const user = userEvent.setup();
+    
+    // Mock products so an edit button exists
+    axios.get.mockResolvedValueOnce({
+      data: {
+        success: true, // ✅ Must be `true` to set menu items
+        data: [
+          {
+            food_id: 1,
+            food_name: "Coffee",
+            category: "Beverage",
+            price_small: 100,
+            price_medium: 150,
+            price_large: 200,
+            availability_small: "Available",
+            availability_medium: "Available",
+            availability_large: "Not Available",
+            description: "Hot brewed coffee",
+          },
+        ],
+      },
+    });
+  
+    axios.post.mockResolvedValueOnce({
+      data: { success: true, message: "Product updated successfully!" },
+    });
+  
+    render(
+      <MemoryRouter>
+        <AdminMenu />
+      </MemoryRouter>
+    );
+  
+    // ✅ Wait for API data to load
+    await waitFor(() => {
+      const coffeeItems = screen.getAllByText("Coffee");
+      expect(coffeeItems.length).toBeGreaterThan(0); // Ensure both appear
+    });
+
+    // ✅ Click action button to open dropdown
+    const actionButton = screen.getAllByTestId("action-btn")[0];
+    await user.click(actionButton);
+
+    // ✅ Click "Edit" button
+    const editButton = screen.getAllByTestId("edit-product-btn")[0];
+    await user.click(editButton);
+    
+    const nameInput = screen.getByTestId('product-name-input');
+    const priceInput = screen.getByTestId('product-price-input');
+    const saveButton = screen.getByTestId('submit-product-btn');
+
+    await user.clear(nameInput);
+    await user.type(nameInput, 'Updated Coffee');
+    await user.clear(priceInput);
+    await user.type(priceInput, '180');
+    await user.click(saveButton);
+
+    await vi.waitUntil(() => Swal.fire.mock.calls.length > 0);
+    expect(Swal.fire.mock.calls[0]).toEqual([
+        "Success",
+        "Product added successfully!",
+        "success",
+        { timer: 2000 }
+    ]);
+  }); 
+
+  // Test Case 5: Edit Product Succesfully
   it('handles successful product edit', async () => {
     const user = userEvent.setup();
     
