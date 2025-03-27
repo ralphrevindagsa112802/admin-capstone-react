@@ -542,6 +542,7 @@ const AdminMenu = () => {
     <div className="flex flex-wrap gap-2">
       <button
         onClick={handleOpenModal}
+        data-testid="add-product-btn"
         className="px-3 py-2 text-sm md:px-4 md:py-2 md:text-base border-2 border-[#1C359A] text-black font-bold rounded-md hover:bg-white"
       >
         Add Product
@@ -660,14 +661,16 @@ const AdminMenu = () => {
                 <td className="px-4 py-2">{item.description}</td>
                 <td className="px-4 py-2 relative">
                   <button 
-                    onClick={(e) => { e.stopPropagation(); toggleDropdown(item.food_id, sizeItem.size); }} 
+                    onClick={(e) => { e.stopPropagation(); toggleDropdown(item.food_id, sizeItem.size); }}
+                    data-testid="action-btn" 
                     className="p-2 action-button">
                     <FaEllipsisV />
                   </button>
                   {dropdownOpen === `${item.food_id}-${sizeItem.size}` && (
                     <div className="absolute right-0 bg-white rounded drop-shadow-lg w-36 z-50 dropdown-menu">
                       <button 
-                        onClick={() => handleEditItem(item.food_id)} 
+                        onClick={() => handleEditItem(item.food_id)}
+                        data-testid="edit-product-btn" 
                         className="block w-full text-left px-4 py-2 text-black hover:bg-gray-200">
                         Edit
                       </button>
@@ -736,13 +739,15 @@ const AdminMenu = () => {
               <div className="relative">
                 <button 
                   onClick={(e) => { e.stopPropagation(); toggleDropdown(item.food_id, sizeItem.size); }} 
+                  data-testid="action-btn"
                   className="p-2 action-button">
                   <FaEllipsisV />
                 </button>
                 {dropdownOpen === `${item.food_id}-${sizeItem.size}` && (
                   <div className="absolute right-0 bg-white rounded drop-shadow-lg w-36 z-50 dropdown-menu">
                     <button 
-                      onClick={() => handleEditItem(item.food_id)} 
+                      onClick={() => handleEditItem(item.food_id)}
+                      data-testid="edit-product-btn" 
                       className="block w-full text-left px-4 py-2 text-black hover:bg-gray-200 text-sm">
                       Edit
                     </button>
@@ -825,6 +830,7 @@ const AdminMenu = () => {
         >
           <input
             id="fileInput"
+            data-testid="food-img-input"
             type="file"
             className="hidden"
             onChange={handleImageChange}
@@ -854,6 +860,7 @@ const AdminMenu = () => {
             <input
               type="text"
               name="food_name"
+              data-testid="product-name-input"
               value={formData.food_name}
               onChange={handleChange}
               className="w-full p-1.5 border rounded-md text-sm"
@@ -868,6 +875,7 @@ const AdminMenu = () => {
             </label>
             <textarea
               name="description"
+              data-testid="description-input"
               value={formData.description}
               onChange={handleChange}
               className="w-full p-1.5 border rounded-md text-sm"
@@ -882,6 +890,7 @@ const AdminMenu = () => {
             </label>
             <textarea
               name="allergen"
+              data-testid="allergen-input"
               value={formData.allergen}
               onChange={handleChange}
               className="w-full p-1.5 border rounded-md text-sm"
@@ -896,6 +905,7 @@ const AdminMenu = () => {
             </label>
             <select
               name="category"
+              data-testid="category-select"
               value={formData.category}
               onChange={handleChange}
               className="w-full p-1.5 border rounded-md text-sm"
@@ -920,6 +930,7 @@ const AdminMenu = () => {
             <input
               type="number"
               name="price_small"
+              data-testid="product-price-input"
               value={formData.price_small}
               onChange={handleChange}
               className="w-full p-1.5 border rounded-md text-sm"
@@ -946,6 +957,7 @@ const AdminMenu = () => {
             <input
               type="number"
               name="price_large"
+              data-testid="food-size-input"
               value={formData.price_large}
               onChange={handleChange}
               className="w-full p-1.5 border rounded-md text-sm"
@@ -955,6 +967,7 @@ const AdminMenu = () => {
           {/* Submit Button */}
           <button
             type="submit"
+            data-testid="submit-product-btn"
             className="mt-2 bg-blue-600 text-white p-1.5 rounded-md w-full text-sm"
           >
             {editingFoodId ? "Update Product" : "Add Product"}
