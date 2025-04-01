@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
 
@@ -283,41 +283,38 @@ const AdminAnalytics = () => {
   }, [activeTab]);
 
   // Fetch dishes
-  useEffect(() => {
-    const fetchDishes = async () => {
-      if (activeTab === "dishes") {
-        try {
-          setLoadingDishes(true);
-          const response = await axios.get("https://yappari-coffee-bar.shop/api/dishesAdmin.php", {
-            withCredentials: true,
-          });
-
-          console.log("Dishes API Response:", response.data);
-
-          if (response.data && response.data.success && Array.isArray(response.data.dishes)) {
-            setDishes(response.data.dishes);
-            setDishesError(null);
-          } else if (Array.isArray(response.data)) {
-            // Handle alternative response format
-            setDishes(response.data);
-            setDishesError(null);
-          } else {
-            console.error("Unexpected API response:", response.data);
-            setDishes([]);
-            setDishesError("Invalid response format from server");
-          }
-        } catch (error) {
-          console.error("Fetch Dishes Error:", error.response?.data || error.message);
-          setDishesError("Failed to load dishes.");
+useEffect(() => {
+  const fetchDishes = async () => {
+    if (activeTab === "dishes") {
+      try {
+        setLoadingDishes(true);
+        const response = await axios.get("https://yappari-coffee-bar.shop/api/dishesAdmin.php", {
+          withCredentials: true,
+        });
+        console.log("Dishes API Response:", response.data);
+        if (response.data && response.data.success && Array.isArray(response.data.dishes)) {
+          setDishes(response.data.dishes);
+          setDishesError(null);
+        } else if (Array.isArray(response.data)) {
+          // Handle alternative response format
+          setDishes(response.data);
+          setDishesError(null);
+        } else {
+          console.error("Unexpected API response:", response.data);
           setDishes([]);
-        } finally {
-          setLoadingDishes(false);
+          setDishesError("Invalid response format from server");
         }
+      } catch (error) {
+        console.error("Fetch Dishes Error:", error.response?.data || error.message);
+        setDishesError("Failed to load dishes.");
+        setDishes([]);
+      } finally {
+        setLoadingDishes(false);
       }
-    };
-
-    fetchDishes();
-  }, [activeTab]);
+    }
+  };
+  fetchDishes();
+}, [activeTab]);
 
   // Handle logout
   const handleLogout = async () => {
@@ -722,69 +719,145 @@ const AdminAnalytics = () => {
           </div>
         );
 
-      case "dishes":
-        return (
-          <div className="bg-white p-4 md:p-6 rounded-lg shadow-md">
-            <h3 className="text-lg md:text-xl font-semibold mb-2 md:mb-4">Dishes</h3>
-            {loadingDishes ? (
-              <p>Loading dishes data...</p>
-            ) : dishesError ? (
-              <p className="text-red-500">{dishesError}</p>
-            ) : !dishes || dishes.length === 0 ? (
-              <p>No dishes found.</p>
-            ) : (
-              <>
-                {/* Desktop and tablet view */}
-                <div className="hidden sm:block overflow-x-auto">
-                  <table className="min-w-full divide-y divide-gray-200">
-                    <thead className="bg-gray-50">
-                      <tr>
-                        <th className="px-2 py-2 md:px-6 md:py-3 text-left text-xs font-medium text-gray-500 uppercase">Dish Name</th>
-                        <th className="px-2 py-2 md:px-6 md:py-3 text-left text-xs font-medium text-gray-500 uppercase">Category</th>
-                        <th className="px-2 py-2 md:px-6 md:py-3 text-left text-xs font-medium text-gray-500 uppercase">Price</th>
-                        <th className="px-2 py-2 md:px-6 md:py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
-                      </tr>
-                    </thead>
-                    <tbody className="bg-white divide-y divide-gray-200">
-                      {dishes.map((dish) => (
-                        <tr key={dish.id}>
-                          <td className="px-2 py-2 md:px-6 md:py-4 whitespace-nowrap text-xs md:text-sm">{dish.dish_name || "Unknown"}</td>
-                          <td className="px-2 py-2 md:px-6 md:py-4 whitespace-nowrap text-xs md:text-sm">{dish.category || "Uncategorized"}</td>
-                          <td className="px-2 py-2 md:px-6 md:py-4 whitespace-nowrap text-xs md:text-sm">₱{dish.price || "0"}</td>
-                          <td className="px-2 py-2 md:px-6 md:py-4 whitespace-nowrap text-xs md:text-sm">
-                            <span className={`px-2 py-1 rounded-md text-xs ${dish.status === "Available" ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"}`}>
-                              {dish.status || "Unknown"}
-                            </span>
-                          </td>
+        case "dishes":
+          return (
+            <div className="bg-white p-4 md:p-6 rounded-lg shadow-md">
+              <h3 className="text-lg md:text-xl font-semibold mb-2 md:mb-4">Dishes</h3>
+              {loadingDishes ? (
+                <p>Loading dishes data...</p>
+              ) : dishesError ? (
+                <p className="text-red-500">{dishesError}</p>
+              ) : !dishes || dishes.length === 0 ? (
+                <p>No dishes found.</p>
+              ) : (
+                <>
+                  {/* Desktop and tablet view */}
+                  <div className="hidden sm:block overflow-x-auto">
+                    <table className="min-w-full divide-y divide-gray-200">
+                      <thead className="bg-gray-50">
+                        <tr>
+                          <th className="px-2 py-2 md:px-6 md:py-3 text-left text-xs font-medium text-gray-500 uppercase">Dish Name</th>
+                          <th className="px-2 py-2 md:px-6 md:py-3 text-left text-xs font-medium text-gray-500 uppercase">Category</th>
+                          <th className="px-2 py-2 md:px-6 md:py-3 text-left text-xs font-medium text-gray-500 uppercase">Small</th>
+                          <th className="px-2 py-2 md:px-6 md:py-3 text-left text-xs font-medium text-gray-500 uppercase">Medium</th>
+                          <th className="px-2 py-2 md:px-6 md:py-3 text-left text-xs font-medium text-gray-500 uppercase">Large</th>
                         </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-
-                {/* Mobile view */}
-                <div className="sm:hidden space-y-3">
-                  {dishes.map((dish) => (
-                    <div key={dish.id} className="bg-gray-50 p-3 rounded-lg">
-                      <div className="flex justify-between items-center mb-2">
-                        <span className="font-medium text-sm">{dish.dish_name || "Unknown"}</span>
-                        <span className={`px-2 py-1 rounded-md text-xs ${dish.status === "Available" ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"}`}>
-                          {dish.status || "Unknown"}
-                        </span>
+                      </thead>
+                      <tbody className="bg-white divide-y divide-gray-200">
+                        {dishes.map((dish) => (
+                          <tr key={dish.food_id}>
+                            <td className="px-2 py-2 md:px-6 md:py-4 whitespace-nowrap text-xs md:text-sm">{dish.dish_name || "Unknown"}</td>
+                            <td className="px-2 py-2 md:px-6 md:py-4 whitespace-nowrap text-xs md:text-sm">{dish.category || "Uncategorized"}</td>
+                            
+                            {/* Small size */}
+                            <td className="px-2 py-2 md:px-6 md:py-4 whitespace-nowrap text-xs md:text-sm">
+                              {dish.price_small ? (
+                                <div>
+                                  <div>₱{dish.price_small}</div>
+                                  <span className={`px-2 py-1 rounded-md text-xs ${dish.availability_small === "Available" ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"}`}>
+                                    {dish.availability_small || "N/A"}
+                                  </span>
+                                </div>
+                              ) : (
+                                <span className="text-gray-400">N/A</span>
+                              )}
+                            </td>
+                            
+                            {/* Medium size */}
+                            <td className="px-2 py-2 md:px-6 md:py-4 whitespace-nowrap text-xs md:text-sm">
+                              {dish.price_medium ? (
+                                <div>
+                                  <div>₱{dish.price_medium}</div>
+                                  <span className={`px-2 py-1 rounded-md text-xs ${dish.availability_medium === "Available" ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"}`}>
+                                    {dish.availability_medium || "N/A"}
+                                  </span>
+                                </div>
+                              ) : (
+                                <span className="text-gray-400">N/A</span>
+                              )}
+                            </td>
+                            
+                            {/* Large size */}
+                            <td className="px-2 py-2 md:px-6 md:py-4 whitespace-nowrap text-xs md:text-sm">
+                              {dish.price_large ? (
+                                <div>
+                                  <div>₱{dish.price_large}</div>
+                                  <span className={`px-2 py-1 rounded-md text-xs ${dish.availability_large === "Available" ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"}`}>
+                                    {dish.availability_large || "N/A"}
+                                  </span>
+                                </div>
+                              ) : (
+                                <span className="text-gray-400">N/A</span>
+                              )}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+        
+                  {/* Mobile view */}
+                  <div className="sm:hidden space-y-3">
+                    {dishes.map((dish) => (
+                      <div key={dish.food_id} className="bg-gray-50 p-3 rounded-lg">
+                        <div className="flex justify-between items-center mb-2">
+                          <span className="font-medium text-sm">{dish.dish_name || "Unknown"}</span>
+                          <span className="text-xs font-medium">{dish.category || "Uncategorized"}</span>
+                        </div>
+                        
+                        <div className="grid grid-cols-3 gap-2 mt-2">
+                          {/* Small size mobile */}
+                          <div className="bg-white p-2 rounded border">
+                            <div className="text-xs font-medium mb-1">Small</div>
+                            {dish.price_small ? (
+                              <>
+                                <div className="text-xs">₱{dish.price_small}</div>
+                                <span className={`inline-block mt-1 px-2 py-1 rounded-md text-xs ${dish.availability_small === "Available" ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"}`}>
+                                  {dish.availability_small || "N/A"}
+                                </span>
+                              </>
+                            ) : (
+                              <span className="text-gray-400 text-xs">N/A</span>
+                            )}
+                          </div>
+                          
+                          {/* Medium size mobile */}
+                          <div className="bg-white p-2 rounded border">
+                            <div className="text-xs font-medium mb-1">Medium</div>
+                            {dish.price_medium ? (
+                              <>
+                                <div className="text-xs">₱{dish.price_medium}</div>
+                                <span className={`inline-block mt-1 px-2 py-1 rounded-md text-xs ${dish.availability_medium === "Available" ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"}`}>
+                                  {dish.availability_medium || "N/A"}
+                                </span>
+                              </>
+                            ) : (
+                              <span className="text-gray-400 text-xs">N/A</span>
+                            )}
+                          </div>
+                          
+                          {/* Large size mobile */}
+                          <div className="bg-white p-2 rounded border">
+                            <div className="text-xs font-medium mb-1">Large</div>
+                            {dish.price_large ? (
+                              <>
+                                <div className="text-xs">₱{dish.price_large}</div>
+                                <span className={`inline-block mt-1 px-2 py-1 rounded-md text-xs ${dish.availability_large === "Available" ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"}`}>
+                                  {dish.availability_large || "N/A"}
+                                </span>
+                              </>
+                            ) : (
+                              <span className="text-gray-400 text-xs">N/A</span>
+                            )}
+                          </div>
+                        </div>
                       </div>
-                      <div className="grid grid-cols-2 gap-1 text-xs">
-                        <div className="text-gray-500">Category:</div>
-                        <div>{dish.category || "Uncategorized"}</div>
-                        <div className="text-gray-500">Price:</div>
-                        <div>₱{dish.price || "0"}</div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </>
-            )}
-          </div>
-        );
+                    ))}
+                  </div>
+                </>
+              )}
+            </div>
+          );
       default:
         return null;
     }
