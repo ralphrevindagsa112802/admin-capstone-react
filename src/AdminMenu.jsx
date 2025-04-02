@@ -11,7 +11,7 @@ const sizeLabels = {
   "Smoothies": { small: "Small", medium: "Medium", large: "Large" },
   "Refreshers": { small: "Small", medium: "Medium", large: "Large" },
   "Milk Drinks": { small: "Small", medium: "Medium", large: "Large" },
-  "Dessert": { small: "Regular" }, // Only one size
+ // "Dessert": { small: "Regular" }, // Only one size
   "Snacks and Pasta": { small: "Regular", medium: "Large", large: "Extra Large" }
 };
 
@@ -48,7 +48,7 @@ const AdminMenu = () => {
     "Smoothies",
     "Refreshers",
     "Milk Drinks",
-    "Dessert",
+    //"Dessert",
     "Snacks and Pasta"
   ];
 
@@ -917,7 +917,7 @@ const AdminMenu = () => {
               <option value="Smoothies">Smoothies</option>
               <option value="Refreshers">Refreshers</option>
               <option value="Milk Drinks">Milk Drinks</option>
-              <option value="Dessert">Dessert</option>
+             {/**  <option value="Dessert">Dessert</option>*/}
               <option value="Snacks and Pasta">Snacks and Pasta</option>
             </select>
           </div>
