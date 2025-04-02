@@ -354,7 +354,7 @@ useEffect(() => {
 
     const getTimeRangeText = () => {
       if (timeRange === "daily") return "Last 7 days";
-      if (timeRange === "monthly") return "Last 12 months";
+      if (timeRange === "monthly") return "Last 31 days";
       return "Last year";
     };
 
@@ -588,6 +588,235 @@ useEffect(() => {
       </div>
     );
   };
+// Add this sales summary component right after the chart
+const renderSalesSummary = () => {
+  if (loading) return <div className="text-center py-4">Loading summary data...</div>;
+  if (error) return null; // Hide on error to avoid duplicate error messages
+
+  // Extract and organize the data based on time period
+  const getSummaryData = () => {
+    // Default empty data
+    const defaultSummary = {
+      daily: { total: 0, average: 0, highest: { value: 0, date: 'N/A' }, lowest: { value: 0, date: 'N/A' } },
+      monthly: { total: 0, average: 0, highest: { value: 0, month: 'N/A' }, lowest: { value: 0, month: 'N/A' } },
+      yearly: { total: 0, average: 0 }
+    };
+
+    // If no data, return defaults
+    if (!analyticsData || (Array.isArray(analyticsData) && analyticsData.length === 0)) {
+      return defaultSummary;
+    }
+
+    // Extract sales data based on response structure
+    const salesData = analyticsData?.salesData || 
+      (Array.isArray(analyticsData) ? analyticsData : []);
+    
+    if (salesData.length === 0) return defaultSummary;
+
+    // Process data for each time range
+    let summary = { ...defaultSummary };
+
+    // Calculate totals
+    const total = salesData.reduce((sum, item) => sum + (parseFloat(item.amount) || 0), 0);
+
+    // Handle daily data (assume last 7 days)
+    if (timeRange === "daily") {
+      const dailyValues = salesData.map(item => ({ 
+        date: item.label, 
+        value: parseFloat(item.amount) || 0 
+      }));
+      
+      // Find highest sales day (excluding zero values)
+      const nonZeroValues = dailyValues.filter(item => item.value > 0);
+      const highest = nonZeroValues.length > 0 
+        ? nonZeroValues.reduce((max, item) => item.value > max.value ? item : max, { value: 0, date: 'N/A' })
+        : { value: 0, date: 'N/A' };
+      
+      // Find lowest sales day (excluding zero values)
+      const lowest = nonZeroValues.length > 0 
+        ? nonZeroValues.reduce((min, item) => item.value < min.value ? item : min, 
+            { value: Number.MAX_VALUE, date: 'N/A' })
+        : { value: 0, date: 'N/A' };
+      
+      // Find day with zero sales for specific display
+      const zeroDays = dailyValues.filter(item => item.value === 0);
+      
+      summary.daily = {
+        total,
+        average: total / (dailyValues.length || 1),
+        highest,
+        lowest: lowest.value === Number.MAX_VALUE ? { value: 0, date: 'N/A' } : lowest,
+        zeroDaysCount: zeroDays.length,
+        zeroDays: zeroDays.map(day => day.date)
+      };
+    }
+    
+    // Handle monthly data (assume last 30 days or whatever is available)
+    else if (timeRange === "monthly") {
+      const monthlyValues = salesData.map(item => ({ 
+        month: item.label, 
+        value: parseFloat(item.amount) || 0 
+      }));
+      
+      // Find highest sales month (excluding zero values)
+      const nonZeroValues = monthlyValues.filter(item => item.value > 0);
+      const highest = nonZeroValues.length > 0 
+        ? nonZeroValues.reduce((max, item) => item.value > max.value ? item : max, { value: 0, month: 'N/A' })
+        : { value: 0, month: 'N/A' };
+      
+      // Find lowest sales month (excluding zero values)
+      const lowest = nonZeroValues.length > 0 
+        ? nonZeroValues.reduce((min, item) => item.value < min.value ? item : min, 
+            { value: Number.MAX_VALUE, month: 'N/A' })
+        : { value: 0, month: 'N/A' };
+      
+      // Find months with zero sales
+      const zeroMonths = monthlyValues.filter(item => item.value === 0);
+      
+      summary.monthly = {
+        total,
+        average: total / (monthlyValues.length || 1),
+        highest,
+        lowest: lowest.value === Number.MAX_VALUE ? { value: 0, month: 'N/A' } : lowest,
+        zeroMonthsCount: zeroMonths.length,
+        zeroMonths: zeroMonths.map(month => month.month)
+      };
+    }
+    
+    // Handle yearly data
+    else if (timeRange === "yearly") {
+      const yearlyValues = salesData.map(item => ({
+        month: item.label,
+        value: parseFloat(item.amount) || 0
+      }));
+      
+      // Find months with zero sales in yearly view
+      const zeroMonths = yearlyValues.filter(item => item.value === 0);
+      
+      summary.yearly = {
+        total,
+        average: total / (salesData.length || 1),
+        zeroMonthsCount: zeroMonths.length,
+        zeroMonths: zeroMonths.map(month => month.month)
+      };
+    }
+
+    return summary;
+  };
+
+  const summaryData = getSummaryData();
+  const currentSummary = summaryData[timeRange];
+
+  // Format currency
+  const formatCurrency = (value) => {
+    return `₱${parseFloat(value).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  };
+
+  return (
+    <div className="mt-8 bg-white p-6 rounded-lg shadow-md">
+      <h2 className="text-xl font-bold text-[#2F3A8F] mb-4">Sales Summary</h2>
+      
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        {/* Total Sales */}
+        <div className="bg-gray-50 p-4 rounded-lg">
+          <h3 className="text-sm font-medium text-gray-500 mb-1">Total Sales</h3>
+          <p className="text-xl font-bold text-gray-800">{formatCurrency(currentSummary.total)}</p>
+        </div>
+
+        {/* Average Sales */}
+        <div className="bg-gray-50 p-4 rounded-lg">
+          <h3 className="text-sm font-medium text-gray-500 mb-1">
+            {timeRange === "daily" ? "Average Daily Sales" : 
+             timeRange === "monthly" ? "Average Monthly Sales" : "Average Sales"}
+          </h3>
+          <p className="text-xl font-bold text-gray-800">{formatCurrency(currentSummary.average)}</p>
+        </div>
+
+        {/* Highest Sales (for daily and monthly views) */}
+        {(timeRange === "daily" || timeRange === "monthly") && (
+          <div className="bg-gray-50 p-4 rounded-lg">
+            <h3 className="text-sm font-medium text-gray-500 mb-1">Highest Sales</h3>
+            <p className="text-xl font-bold text-gray-800">
+              {formatCurrency(timeRange === "daily" ? currentSummary.highest.value : currentSummary.highest.value)}
+            </p>
+            <p className="text-xs text-gray-500 mt-1">
+              {timeRange === "daily" ? currentSummary.highest.date : currentSummary.highest.month}
+            </p>
+          </div>
+        )}
+
+        {/* Lowest Sales (for daily and monthly views) */}
+        {(timeRange === "daily" || timeRange === "monthly") && (
+          <div className="bg-gray-50 p-4 rounded-lg">
+            <h3 className="text-sm font-medium text-gray-500 mb-1">Lowest Sales</h3>
+            <p className="text-xl font-bold text-gray-800">
+              {formatCurrency(timeRange === "daily" ? currentSummary.lowest.value : currentSummary.lowest.value)}
+            </p>
+            <p className="text-xs text-gray-500 mt-1">
+              {timeRange === "daily" ? currentSummary.lowest.date : currentSummary.lowest.month}
+            </p>
+          </div>
+        )}
+        
+        {/* For yearly view, show additional metrics instead of highest/lowest */}
+        {timeRange === "yearly" && (
+          <>
+            <div className="bg-gray-50 p-4 rounded-lg">
+              <h3 className="text-sm font-medium text-gray-500 mb-1">Sales Growth</h3>
+              <p className="text-xl font-bold text-gray-800">
+                {analyticsData?.growthRate ? `${analyticsData.growthRate}%` : 'N/A'}
+              </p>
+              <p className="text-xs text-gray-500 mt-1">vs previous year</p>
+            </div>
+            <div className="bg-gray-50 p-4 rounded-lg">
+              <h3 className="text-sm font-medium text-gray-500 mb-1">Projected Annual</h3>
+              <p className="text-xl font-bold text-gray-800">
+                {analyticsData?.projectedAnnual ? formatCurrency(analyticsData.projectedAnnual) : 'N/A'}
+              </p>
+            </div>
+          </>
+        )}
+      </div>
+      
+      {/* Zero Sales Days/Months Section */}
+      {(timeRange === "daily" && currentSummary.zeroDaysCount > 0) && (
+        <div className="mt-4 bg-gray-50 p-4 rounded-lg">
+          <h3 className="text-sm font-medium text-gray-500 mb-2">Days with Zero Sales</h3>
+          <p className="text-sm text-gray-700">
+            {currentSummary.zeroDaysCount === 1 
+              ? '1 day had no sales: ' 
+              : `${currentSummary.zeroDaysCount} days had no sales: `}
+            {currentSummary.zeroDays.join(', ')}
+          </p>
+        </div>
+      )}
+      
+      {(timeRange === "monthly" && currentSummary.zeroMonthsCount > 0) && (
+        <div className="mt-4 bg-gray-50 p-4 rounded-lg">
+          <h3 className="text-sm font-medium text-gray-500 mb-2">Days with Zero Sales</h3>
+          <p className="text-sm text-gray-700">
+            {currentSummary.zeroMonthsCount === 1 
+              ? '1 day had no sales: ' 
+              : `${currentSummary.zeroMonthsCount} days had no sales: `}
+            {currentSummary.zeroMonths.join(', ')}
+          </p>
+        </div>
+      )}
+      
+      {(timeRange === "yearly" && currentSummary.zeroMonthsCount > 0) && (
+        <div className="mt-4 bg-gray-50 p-4 rounded-lg">
+          <h3 className="text-sm font-medium text-gray-500 mb-2">Months with Zero Sales</h3>
+          <p className="text-sm text-gray-700">
+            {currentSummary.zeroMonthsCount === 1 
+              ? '1 month had no sales: ' 
+              : `${currentSummary.zeroMonthsCount} months had no sales: `}
+            {currentSummary.zeroMonths.join(', ')}
+          </p>
+        </div>
+      )}
+    </div>
+  );
+};
 
   // Render tabs content
   // Render tabs content
@@ -1103,16 +1332,19 @@ useEffect(() => {
 
           {/* Dashboard Cards - Always render regardless of data state */}
           {renderDashboardCards()}
+          
 
           {/* Chart Title */}
           <h2 className="font-semibold text-lg mb-4">
             {timeRange === "daily" && "Daily sales (last 7 days)"}
-            {timeRange === "monthly" && "Monthly sales (last 12 months)"}
+            {timeRange === "monthly" && "Monthly sales (last 31 days)"}
             {timeRange === "yearly" && "Yearly sales"}
           </h2>
 
           {/* Sales Chart */}
           {renderChart()}
+          {renderSalesSummary()}
+
 
           {/* Tabbed Interface */}
           <div className="mt-8">
